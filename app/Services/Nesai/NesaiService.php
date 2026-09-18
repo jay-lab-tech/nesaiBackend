@@ -1,0 +1,3 @@
+<?php
+namespace App\Services\Nesai;
+class NesaiService { public function __construct(private IntentService $intent, private RetrievalService $retrieval, private LlmService $llm) {} public function respond(string $message): array { $intent = $this->intent->detect($message); $sources = $this->retrieval->retrieve($message); return ['answer' => 'NESAI is in development mode. School information will be answered from verified NESAS content once it is available.', 'intent' => $intent, 'sources' => $sources, 'actions' => [], 'mode' => $this->llm->isConfigured() ? 'provider-pending' : 'development-stub']; } }
