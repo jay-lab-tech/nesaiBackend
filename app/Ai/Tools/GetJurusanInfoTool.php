@@ -10,7 +10,9 @@ use Stringable;
 class GetJurusanInfoTool implements Tool
 {
     /**
-     * Pemetaan singkatan atau alias umum ke nama kompetensi keahlian.
+     * [CORE-LOGIC: ALIAS-NORMALIZATION]
+     * Kamus normalisasi singkatan/istilah populer ke nama resmi kompetensi keahlian SMKN 1 Subang.
+     * Mencegah LLM gagal menemukan jurusan akibat variasi singkatan siswa (misal: RPL -> PPLG, AP -> MPLB).
      *
      * @var array<string, string>
      */
@@ -24,12 +26,14 @@ class GetJurusanInfoTool implements Tool
         'mplb' => 'Manajemen Perkantoran dan Layanan Bisnis',
         'otkp' => 'Manajemen Perkantoran dan Layanan Bisnis',
         'ap' => 'Manajemen Perkantoran dan Layanan Bisnis',
+        'ps' => 'Pemasaran',
         'pm' => 'Pemasaran',
         'bdp' => 'Pemasaran',
         'tbsm' => 'Teknik Otomotif',
         'tkr' => 'Teknik Otomotif',
         'otomotif' => 'Teknik Otomotif',
         'tp' => 'Teknik Mesin',
+        'tm' => 'Teknik Mesin',
         'mesin' => 'Teknik Mesin',
         'tlog' => 'Teknik Logistik',
         'logistik' => 'Teknik Logistik',
@@ -59,6 +63,9 @@ class GetJurusanInfoTool implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        // [CORE-LOGIC: STATIC-CONFIG-SOURCE]
+        // Sesuai aturan MVP kompetisi: data jurusan dibaca statis dari config/jurusan.php (bukan database)
+        // untuk menjamin response time rendah (<10ms) dan deterministik tanpa bottleneck I/O database.
         $jurusanList = config('jurusan', []);
 
         if (empty($jurusanList)) {
@@ -79,6 +86,8 @@ class GetJurusanInfoTool implements Tool
             $searchTerms[] = strtolower($this->aliases[$lowerQuery]);
         }
 
+        // [CORE-LOGIC: FUZZY-SEARCH-FILTER]
+        // Filter fleksibel mencocokkan query atau alias hasil normalisasi ke field nama maupun deskripsi jurusan.
         $filtered = array_values(array_filter($jurusanList, function ($item) use ($searchTerms) {
             $nama = strtolower($item['nama'] ?? '');
             $deskripsi = strtolower($item['deskripsi'] ?? '');
@@ -102,7 +111,8 @@ class GetJurusanInfoTool implements Tool
     }
 
     /**
-     * Get the tool's schema definition.
+     * [CORE-LOGIC: TOOL-JSON-SCHEMA]
+     * Menyediakan JSON Schema parameter untuk function calling Gemini.
      */
     public function schema(JsonSchema $schema): array
     {

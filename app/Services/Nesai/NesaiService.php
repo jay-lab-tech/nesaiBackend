@@ -34,10 +34,15 @@ class NesaiService
         $actions = [];
 
         try {
+            // [CORE-LOGIC: AI-AGENT-INVOCATION]
+            // Memanggil SchoolAssistantAgent (laravel/ai) secara non-streaming untuk tahap MVP.
+            // Agent secara otomatis menentukan apakah perlu memanggil GetJurusanInfoTool atau NavigateToPageTool.
             $response = SchoolAssistantAgent::make()->prompt($message);
             $answer = $response->text;
 
-            // Ekstraksi actions & sources dari toolResults
+            // [CORE-LOGIC: TOOL-RESULT-EXTRACTION]
+            // Mengekstrak aksi navigasi dan atribusi sumber data dari hasil eksekusi tool ($response->toolResults).
+            // Payload dinormalisasi agar dapat langsung dikonsumsi frontend Next.js untuk tombol quick-action/redirect.
             if (isset($response->toolResults) && $response->toolResults->isNotEmpty()) {
                 foreach ($response->toolResults as $toolResult) {
                     if ($toolResult->name === 'navigate_to_page' && is_string($toolResult->result)) {
@@ -48,6 +53,27 @@ class NesaiService
                                 'path' => $navData['path'],
                                 'title' => $navData['title'] ?? 'Navigasi Halaman',
                             ];
+                        }
+                    }
+
+                    if ($toolResult->name === 'recommend_jurusan') {
+                        $sources[] = 'Rekomendasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $intent = 'major_recommendation';
+
+                        // Buatkan quick action navigasi ke jurusan teratas yang direkomendasikan
+                        if (is_string($toolResult->result)) {
+                            $recData = json_decode($toolResult->result, true);
+                            if (! empty($recData['rekomendasi']) && is_array($recData['rekomendasi'])) {
+                                foreach (array_slice($recData['rekomendasi'], 0, 2) as $rec) {
+                                    if (! empty($rec['slug'])) {
+                                        $actions[] = [
+                                            'type' => 'navigate',
+                                            'path' => '/jurusan/' . $rec['slug'],
+                                            'title' => 'Lihat ' . ($rec['nama'] ?? 'Jurusan'),
+                                        ];
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -74,13 +100,19 @@ class NesaiService
                         ];
                     }
 
+                    if ($toolCall->name === 'recommend_jurusan') {
+                        $sources[] = 'Rekomendasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $intent = 'major_recommendation';
+                    }
+
                     if ($toolCall->name === 'get_jurusan_info') {
                         $sources[] = 'Informasi Jurusan SMKN 1 Subang (config/jurusan.php)';
                     }
                 }
             }
 
-            // Jika agent memanggil aksi navigasi, sesuaikan intent ke school_navigation
+            // [CORE-LOGIC: INTENT-NORMALIZATION]
+            // Jika agent memutuskan ada halaman yang harus dikunjungi pengguna, selaraskan intent ke 'school_navigation'.
             if (! empty($actions) && $intent === 'school_information') {
                 $intent = 'school_navigation';
             }
@@ -96,6 +128,9 @@ class NesaiService
                 'mode' => 'ai-agent',
             ];
         } catch (Throwable $e) {
+            // [CORE-LOGIC: RESILIENT-FALLBACK-GUARD]
+            // Mencegah HTTP 500 error ke pengguna saat presentasi juri jika kuota Gemini habis (rate limit 429) atau koneksi timeout.
+            // Mengembalikan respons ramah beserta opsi tombol navigasi darurat ke halaman penting sekolah.
             Log::error('NESAI Agent error: ' . $e->getMessage(), [
                 'exception' => $e,
                 'message' => $message,

@@ -10,7 +10,9 @@ use Stringable;
 class NavigateToPageTool implements Tool
 {
     /**
-     * Pemetaan rute atau halaman standar di website SMKN 1 Subang.
+     * [CORE-LOGIC: ROUTE-DICTIONARY]
+     * Kamus pemetaan rute halaman frontend Next.js SMKN 1 Subang.
+     * Berfungsi memetakan sinonim percakapan ('daftar', 'pendaftaran', 'tentang') ke path URL resmi frontend ('/ppdb', '/profil').
      *
      * @var array<string, array{path: string, title: string}>
      */
@@ -59,6 +61,8 @@ class NavigateToPageTool implements Tool
      */
     public function handle(Request $request): Stringable|string
     {
+        // [CORE-LOGIC: ROUTE-NORMALIZATION-LOGIC]
+        // Menangani input fleksibel dari LLM (nama rute umum, path bergaris miring, maupun penambahan slug dinamis).
         $rawPage = strtolower(trim($request->string('page')->toString()));
         $slug = trim($request->string('slug')->toString());
         $label = trim($request->string('label')->toString());
@@ -87,6 +91,8 @@ class NavigateToPageTool implements Tool
             $title = $label !== '' ? $label : 'Halaman ' . ucfirst($cleanKey);
         }
 
+        // [CORE-LOGIC: STRUCTURED-ACTION-PAYLOAD]
+        // Format payload standar yang nantinya diekstrak NesaiService menjadi properti `actions` JSON respons API
         $payload = [
             'status' => 'success',
             'action' => 'navigate',
@@ -99,7 +105,8 @@ class NavigateToPageTool implements Tool
     }
 
     /**
-     * Get the tool's schema definition.
+     * [CORE-LOGIC: TOOL-JSON-SCHEMA]
+     * Mendefinisikan schema argumen tool untuk model Gemini.
      */
     public function schema(JsonSchema $schema): array
     {
