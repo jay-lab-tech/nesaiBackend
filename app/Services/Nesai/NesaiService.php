@@ -80,6 +80,27 @@ class NesaiService
                     if ($toolResult->name === 'get_jurusan_info') {
                         $sources[] = 'Informasi Jurusan SMKN 1 Subang (config/jurusan.php)';
                     }
+
+                    if ($toolResult->name === 'get_school_info') {
+                        $sources[] = 'Profil Resmi SMKN 1 Subang (config/school.php)';
+                        // Tambahkan navigasi ke halaman profil dan kontak
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/profil',
+                            'title' => 'Lihat Profil SMKN 1 Subang',
+                        ];
+                    }
+
+                    if ($toolResult->name === 'get_ppdb_info') {
+                        $sources[] = 'Informasi PPDB SMKN 1 Subang (config/ppdb.php)';
+                        $intent = 'ppdb_information';
+                        // Tambahkan navigasi ke halaman PPDB
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/ppdb',
+                            'title' => 'Halaman PPDB SMKN 1 Subang',
+                        ];
+                    }
                 }
             }
 
@@ -107,6 +128,25 @@ class NesaiService
 
                     if ($toolCall->name === 'get_jurusan_info') {
                         $sources[] = 'Informasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                    }
+
+                    if ($toolCall->name === 'get_school_info') {
+                        $sources[] = 'Profil Resmi SMKN 1 Subang (config/school.php)';
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/profil',
+                            'title' => 'Lihat Profil SMKN 1 Subang',
+                        ];
+                    }
+
+                    if ($toolCall->name === 'get_ppdb_info') {
+                        $sources[] = 'Informasi PPDB SMKN 1 Subang (config/ppdb.php)';
+                        $intent = 'ppdb_information';
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/ppdb',
+                            'title' => 'Halaman PPDB SMKN 1 Subang',
+                        ];
                     }
                 }
             }
