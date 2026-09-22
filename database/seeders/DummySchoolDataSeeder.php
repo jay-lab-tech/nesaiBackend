@@ -44,32 +44,37 @@ class DummySchoolDataSeeder extends Seeder
         ];
 
         foreach ($newsData as $news) {
-            News::create([
-                'title' => $news['title'],
-                'slug' => Str::slug($news['title']),
-                'excerpt' => $news['excerpt'],
-                'body' => $news['body'],
-                'published_at' => $news['published_at'],
-            ]);
+            News::updateOrCreate(
+                ['slug' => Str::slug($news['title'])],
+                [
+                    'title' => $news['title'],
+                    'excerpt' => $news['excerpt'],
+                    'body' => $news['body'],
+                    'published_at' => $news['published_at'],
+                ],
+            );
         }
 
-        Ppdb::create([
-            'title' => 'PPDB Tahun Ajaran 2027/2028 (Dummy)',
-            'description' => 'Informasi penerimaan peserta didik baru — data ini masih placeholder, menunggu ketentuan resmi dari sekolah.',
-            'requirements' => [
-                'Fotokopi ijazah/SKL SMP/MTs',
-                'Fotokopi Kartu Keluarga',
-                'Pas foto berwarna 3x4',
-                'Surat keterangan sehat (dummy)',
+        Ppdb::updateOrCreate(
+            ['title' => 'PPDB Tahun Ajaran 2027/2028 (Dummy)'],
+            [
+                'description' => 'Informasi penerimaan peserta didik baru — data ini masih placeholder, menunggu ketentuan resmi dari sekolah.',
+                'requirements' => [
+                    'Fotokopi ijazah/SKL SMP/MTs',
+                    'Fotokopi Kartu Keluarga',
+                    'Pas foto berwarna 3x4',
+                    'Surat keterangan sehat (dummy)',
+                ],
+                'schedule' => [
+                    ['tahap' => 'Pendaftaran Online', 'tanggal' => '1 - 15 Juni 2027 (dummy)'],
+                    ['tahap' => 'Seleksi Berkas', 'tanggal' => '16 - 20 Juni 2027 (dummy)'],
+                    ['tahap' => 'Pengumuman', 'tanggal' => '25 Juni 2027 (dummy)'],
+                    ['tahap' => 'Daftar Ulang', 'tanggal' => '26 - 30 Juni 2027 (dummy)'],
+                ],
+                // Placeholder tidak boleh tampil sebagai PPDB aktif.
+                'is_active' => false,
             ],
-            'schedule' => [
-                ['tahap' => 'Pendaftaran Online', 'tanggal' => '1 - 15 Juni 2027 (dummy)'],
-                ['tahap' => 'Seleksi Berkas', 'tanggal' => '16 - 20 Juni 2027 (dummy)'],
-                ['tahap' => 'Pengumuman', 'tanggal' => '25 Juni 2027 (dummy)'],
-                ['tahap' => 'Daftar Ulang', 'tanggal' => '26 - 30 Juni 2027 (dummy)'],
-            ],
-            'is_active' => true,
-        ]);
+        );
 
         $faqsData = [
             ['question' => 'Bagaimana cara mendaftar PPDB?', 'answer' => 'Pendaftaran dilakukan secara online melalui website sekolah pada periode yang ditentukan. (dummy)'],
@@ -79,11 +84,10 @@ class DummySchoolDataSeeder extends Seeder
         ];
 
         foreach ($faqsData as $index => $faq) {
-            Faq::create([
-                'question' => $faq['question'],
-                'answer' => $faq['answer'],
-                'sort_order' => $index,
-            ]);
+            Faq::updateOrCreate(
+                ['question' => $faq['question']],
+                ['answer' => $faq['answer'], 'sort_order' => $index],
+            );
         }
     }
 }

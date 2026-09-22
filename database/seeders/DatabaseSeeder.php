@@ -18,7 +18,7 @@ class DatabaseSeeder extends Seeder
         // karya inovasi, statistik SPMB & tracking alumni.
         $this->call(SchoolPublicDataSeeder::class);
 
-        // Data PLACEHOLDER untuk News/PPDB/FAQ — ganti begitu konten resmi tersedia.
-        $this->call(DummySchoolDataSeeder::class);
+        // DummySchoolDataSeeder tidak dijalankan otomatis. Data placeholder
+        // tidak boleh tampil sebagai data resmi pada environment aplikasi.
     }
 }

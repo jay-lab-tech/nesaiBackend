@@ -27,7 +27,7 @@ class SchoolPublicDataSeeder extends Seeder
 {
     public function run(): void
     {
-        School::create([
+        School::updateOrCreate(['npsn' => '20233680'], [
             'name' => 'SMK Negeri 1 Subang',
             'npsn' => '20233680',
             'address' => 'Jalan Arief Rahman Hakim No. 35, Kelurahan Cigadung, Kecamatan Subang, Kabupaten Subang, Jawa Barat 41213',
@@ -130,7 +130,7 @@ class SchoolPublicDataSeeder extends Seeder
         foreach ($majors as $data) {
             $description = $data['summary'] . ' ' . $data['note'];
 
-            $major = Major::create([
+            $major = Major::updateOrCreate(['slug' => Str::slug($data['name'])], [
                 'name' => $data['name'],
                 'slug' => Str::slug($data['name']),
                 'summary' => $data['summary'],
@@ -140,17 +140,17 @@ class SchoolPublicDataSeeder extends Seeder
             $majorsByName[$data['name']] = $major;
 
             foreach ($data['subjects'] as $subject) {
-                MajorSubject::create([
-                    'major_id' => $major->id,
-                    'name' => $subject,
-                ]);
+                MajorSubject::updateOrCreate(
+                    ['major_id' => $major->id, 'name' => $subject],
+                    ['description' => null],
+                );
             }
 
             foreach ($data['careers'] as $career) {
-                Career::create([
-                    'major_id' => $major->id,
-                    'name' => $career,
-                ]);
+                Career::updateOrCreate(
+                    ['major_id' => $major->id, 'name' => $career],
+                    ['description' => null],
+                );
             }
         }
 
@@ -176,12 +176,14 @@ class SchoolPublicDataSeeder extends Seeder
         ];
 
         foreach ($alumniData as $alum) {
-            Alumni::create([
-                'major_id' => $majorsByName[$alum['major']]->id ?? null,
-                'name' => $alum['name'],
-                'headline' => $alum['headline'],
-                'story' => $alum['story'],
-            ]);
+            Alumni::updateOrCreate(
+                ['name' => $alum['name']],
+                [
+                    'major_id' => $majorsByName[$alum['major']]->id ?? null,
+                    'headline' => $alum['headline'],
+                    'story' => $alum['story'],
+                ],
+            );
         }
 
         // Sarana dan Prasarana.
@@ -192,7 +194,7 @@ class SchoolPublicDataSeeder extends Seeder
             'Aula Mimake', 'Taman Membaca', 'Laboratorium Komputer',
         ];
         foreach ($facilities as $name) {
-            Facility::create(['name' => $name]);
+            Facility::updateOrCreate(['name' => $name], ['category' => null]);
         }
 
         // Ekstrakurikuler.
@@ -205,7 +207,7 @@ class SchoolPublicDataSeeder extends Seeder
             'PIK-R', 'Kaligrafi', 'Hover',
         ];
         foreach ($extracurriculars as $name) {
-            Extracurricular::create(['name' => $name]);
+            Extracurricular::updateOrCreate(['name' => $name], ['category' => null]);
         }
 
         // Karya Inovasi ber-HAKI.
@@ -215,12 +217,14 @@ class SchoolPublicDataSeeder extends Seeder
             ['name' => 'Siborin', 'major' => 'Pengembangan Perangkat Lunak dan Gim', 'description' => 'Standing Information Board — aplikasi papan informasi berdiri, mendapat Hak Kekayaan Intelektual dari Kementerian Hukum dan HAM.'],
         ];
         foreach ($innovations as $data) {
-            Innovation::create([
-                'major_id' => $majorsByName[$data['major']]->id ?? null,
-                'name' => $data['name'],
-                'description' => $data['description'],
-                'has_haki' => true,
-            ]);
+            Innovation::updateOrCreate(
+                ['name' => $data['name']],
+                [
+                    'major_id' => $majorsByName[$data['major']]->id ?? null,
+                    'description' => $data['description'],
+                    'has_haki' => true,
+                ],
+            );
         }
 
         // Data Peminat PPDB (SPMB) per program keahlian, 2022-2025.
@@ -242,11 +246,10 @@ class SchoolPublicDataSeeder extends Seeder
                 continue;
             }
             foreach ($years as $year => $count) {
-                AdmissionStat::create([
-                    'major_id' => $majorId,
-                    'year' => $year,
-                    'applicant_count' => $count,
-                ]);
+                AdmissionStat::updateOrCreate(
+                    ['major_id' => $majorId, 'year' => $year],
+                    ['applicant_count' => $count],
+                );
             }
         }
 
@@ -260,13 +263,15 @@ class SchoolPublicDataSeeder extends Seeder
             2025 => ['employed' => 64.2, 'entrepreneur' => 20, 'college' => 13.4, 'other' => 2.4],
         ];
         foreach ($alumniTracking as $year => $data) {
-            AlumniTrackingStat::create([
-                'year' => $year,
-                'employed_percent' => $data['employed'],
-                'entrepreneur_percent' => $data['entrepreneur'],
-                'college_percent' => $data['college'],
-                'other_percent' => $data['other'],
-            ]);
+            AlumniTrackingStat::updateOrCreate(
+                ['year' => $year],
+                [
+                    'employed_percent' => $data['employed'],
+                    'entrepreneur_percent' => $data['entrepreneur'],
+                    'college_percent' => $data['college'],
+                    'other_percent' => $data['other'],
+                ],
+            );
         }
     }
 }
