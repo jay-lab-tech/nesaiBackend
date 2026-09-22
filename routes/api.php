@@ -1,4 +1,5 @@
 <?php
+
 use App\Http\Controllers\Api\ContentController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\MajorController;
@@ -21,6 +22,7 @@ Route::prefix('v1')->group(function (): void {
     Route::get('news/{slug}', [ContentController::class, 'newsShow']);
     Route::get('ppdb', [ContentController::class, 'ppdb']);
     Route::get('alumni', [ContentController::class, 'alumni']);
+    Route::get('faqs', [ContentController::class, 'faqs']);
     Route::get('search', SearchController::class);
     Route::post('recommendations/majors', RecommendationController::class);
 
