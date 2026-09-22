@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Innovation extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id'];
+
+    protected $casts = [
+        'has_haki' => 'boolean',
+    ];
 
     public function major()
     {

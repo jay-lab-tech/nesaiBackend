@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AdmissionStat extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id'];
 
     public function major()
     {

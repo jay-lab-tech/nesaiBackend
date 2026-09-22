@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class Extracurricular extends Model
 {
-    protected $guarded = [];
+    protected $guarded = ['id'];
 }
