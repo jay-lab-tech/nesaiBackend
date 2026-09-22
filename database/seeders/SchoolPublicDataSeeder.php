@@ -27,7 +27,7 @@ class SchoolPublicDataSeeder extends Seeder
 {
     public function run(): void
     {
-        School::create([
+        School::updateOrCreate(['npsn' => '20233680'], [
             'name' => 'SMK Negeri 1 Subang',
             'npsn' => '20233680',
             'address' => 'Jalan Arief Rahman Hakim No. 35, Kelurahan Cigadung, Kecamatan Subang, Kabupaten Subang, Jawa Barat 41213',
@@ -38,8 +38,10 @@ class SchoolPublicDataSeeder extends Seeder
             'area_size' => '18.882 m2',
             'principal_name' => 'Walyati Retnoningsih, S.Si., M.AP',
             'staff_count' => 159,
-            'student_count' => null,
+            'student_count' => 2589,
             'classroom_count' => null,
+            'classroom_count_min' => 50,
+            'classroom_count_max' => 52,
             'stats_updated_at' => null,
             'description' => 'SMK Negeri 1 Subang adalah sekolah menengah kejuruan negeri di Kabupaten Subang, Jawa Barat, terakreditasi A, dengan program unggulan BerAKSI (Berkarakter, Adaptif, Kompeten, Sinergis, Inovatif).',
             'vision' => 'Menjadikan Lulusan yang Berkarakter Agamis, Berjiwa Wirausaha, Mampu Beradaptasi dengan Perkembangan Zaman, Kompeten di Bidangnya, Peduli Terhadap Lingkungan dan menerapkan BLUD pada Tahun 2029.',
@@ -130,7 +132,7 @@ class SchoolPublicDataSeeder extends Seeder
         foreach ($majors as $data) {
             $description = $data['summary'] . ' ' . $data['note'];
 
-            $major = Major::create([
+            $major = Major::updateOrCreate(['slug' => Str::slug($data['name'])], [
                 'name' => $data['name'],
                 'slug' => Str::slug($data['name']),
                 'summary' => $data['summary'],
@@ -140,17 +142,17 @@ class SchoolPublicDataSeeder extends Seeder
             $majorsByName[$data['name']] = $major;
 
             foreach ($data['subjects'] as $subject) {
-                MajorSubject::create([
-                    'major_id' => $major->id,
-                    'name' => $subject,
-                ]);
+                MajorSubject::updateOrCreate(
+                    ['major_id' => $major->id, 'name' => $subject],
+                    ['description' => null],
+                );
             }
 
             foreach ($data['careers'] as $career) {
-                Career::create([
-                    'major_id' => $major->id,
-                    'name' => $career,
-                ]);
+                Career::updateOrCreate(
+                    ['major_id' => $major->id, 'name' => $career],
+                    ['description' => null],
+                );
             }
         }
 
@@ -176,12 +178,14 @@ class SchoolPublicDataSeeder extends Seeder
         ];
 
         foreach ($alumniData as $alum) {
-            Alumni::create([
-                'major_id' => $majorsByName[$alum['major']]->id ?? null,
-                'name' => $alum['name'],
-                'headline' => $alum['headline'],
-                'story' => $alum['story'],
-            ]);
+            Alumni::updateOrCreate(
+                ['name' => $alum['name']],
+                [
+                    'major_id' => $majorsByName[$alum['major']]->id ?? null,
+                    'headline' => $alum['headline'],
+                    'story' => $alum['story'],
+                ],
+            );
         }
 
         // Sarana dan Prasarana.
@@ -192,7 +196,45 @@ class SchoolPublicDataSeeder extends Seeder
             'Aula Mimake', 'Taman Membaca', 'Laboratorium Komputer',
         ];
         foreach ($facilities as $name) {
-            Facility::create(['name' => $name]);
+            Facility::updateOrCreate(
+                ['name' => $name],
+                [
+                    'category' => 'fasilitas umum',
+                    'quantity' => 1,
+                    'is_placeholder' => false,
+                ],
+            );
+        }
+
+        // Inventaris lab per jurusan. Detail teknis masih placeholder dan
+        // harus diganti setelah sekolah memberikan spesifikasi resmi.
+        $laboratories = [
+            ['name' => 'Laboratorium RPL', 'major' => 'Pengembangan Perangkat Lunak dan Gim', 'quantity' => 1],
+            ['name' => 'Laboratorium TKJ', 'major' => 'Teknik Jaringan Komputer dan Telekomunikasi', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 1', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 2', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 3', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium Pemasaran', 'major' => 'Pemasaran', 'quantity' => 1],
+            ['name' => 'Laboratorium DKV 1', 'major' => 'Desain Komunikasi Visual', 'quantity' => 1],
+            ['name' => 'Laboratorium DKV 2', 'major' => 'Desain Komunikasi Visual', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Otomotif', 'major' => 'Teknik Otomotif', 'quantity' => 1],
+            ['name' => 'Laboratorium AKL', 'major' => 'Akuntansi dan Keuangan Lembaga', 'quantity' => 1],
+            ['name' => 'Laboratorium Kuliner', 'major' => 'Kuliner', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Mesin', 'major' => 'Teknik Mesin', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Logistik', 'major' => 'Teknik Logistik', 'quantity' => 1],
+        ];
+
+        foreach ($laboratories as $laboratory) {
+            Facility::updateOrCreate(
+                ['name' => $laboratory['name']],
+                [
+                    'major_id' => $majorsByName[$laboratory['major']]->id ?? null,
+                    'category' => 'laboratorium',
+                    'quantity' => $laboratory['quantity'],
+                    'description' => 'Detail teknis laboratorium masih placeholder/fiktif dan menunggu verifikasi sekolah.',
+                    'is_placeholder' => true,
+                ],
+            );
         }
 
         // Ekstrakurikuler.
@@ -205,7 +247,7 @@ class SchoolPublicDataSeeder extends Seeder
             'PIK-R', 'Kaligrafi', 'Hover',
         ];
         foreach ($extracurriculars as $name) {
-            Extracurricular::create(['name' => $name]);
+            Extracurricular::updateOrCreate(['name' => $name], ['category' => null]);
         }
 
         // Karya Inovasi ber-HAKI.
@@ -215,12 +257,14 @@ class SchoolPublicDataSeeder extends Seeder
             ['name' => 'Siborin', 'major' => 'Pengembangan Perangkat Lunak dan Gim', 'description' => 'Standing Information Board — aplikasi papan informasi berdiri, mendapat Hak Kekayaan Intelektual dari Kementerian Hukum dan HAM.'],
         ];
         foreach ($innovations as $data) {
-            Innovation::create([
-                'major_id' => $majorsByName[$data['major']]->id ?? null,
-                'name' => $data['name'],
-                'description' => $data['description'],
-                'has_haki' => true,
-            ]);
+            Innovation::updateOrCreate(
+                ['name' => $data['name']],
+                [
+                    'major_id' => $majorsByName[$data['major']]->id ?? null,
+                    'description' => $data['description'],
+                    'has_haki' => true,
+                ],
+            );
         }
 
         // Data Peminat PPDB (SPMB) per program keahlian, 2022-2025.
@@ -242,11 +286,10 @@ class SchoolPublicDataSeeder extends Seeder
                 continue;
             }
             foreach ($years as $year => $count) {
-                AdmissionStat::create([
-                    'major_id' => $majorId,
-                    'year' => $year,
-                    'applicant_count' => $count,
-                ]);
+                AdmissionStat::updateOrCreate(
+                    ['major_id' => $majorId, 'year' => $year],
+                    ['applicant_count' => $count],
+                );
             }
         }
 
@@ -260,13 +303,15 @@ class SchoolPublicDataSeeder extends Seeder
             2025 => ['employed' => 64.2, 'entrepreneur' => 20, 'college' => 13.4, 'other' => 2.4],
         ];
         foreach ($alumniTracking as $year => $data) {
-            AlumniTrackingStat::create([
-                'year' => $year,
-                'employed_percent' => $data['employed'],
-                'entrepreneur_percent' => $data['entrepreneur'],
-                'college_percent' => $data['college'],
-                'other_percent' => $data['other'],
-            ]);
+            AlumniTrackingStat::updateOrCreate(
+                ['year' => $year],
+                [
+                    'employed_percent' => $data['employed'],
+                    'entrepreneur_percent' => $data['entrepreneur'],
+                    'college_percent' => $data['college'],
+                    'other_percent' => $data['other'],
+                ],
+            );
         }
     }
 }
