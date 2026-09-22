@@ -1,33 +1,10 @@
 <?php
 
-use App\Http\Controllers\Api\AdminAdmissionStatController;
-use App\Http\Controllers\Api\AdminAlumniController;
-use App\Http\Controllers\Api\AdminAlumniTrackingController;
-use App\Http\Controllers\Api\AdminContentController;
-use App\Http\Controllers\Api\AdminDashboardController;
-use App\Http\Controllers\Api\AdminExtracurricularController;
-use App\Http\Controllers\Api\AdminFacilityController;
-use App\Http\Controllers\Api\AdminFaqController;
-use App\Http\Controllers\Api\AdminInnovationController;
-use App\Http\Controllers\Api\AdminMajorController;
-use App\Http\Controllers\Api\AdminNewsController;
-use App\Http\Controllers\Api\AdminPpdbController;
-use App\Http\Controllers\Api\AdminSchoolController;
-use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\Admin;
+use App\Http\Controllers\Api\Auth\AuthController;
 use App\Http\Controllers\Api\HealthController;
 use App\Http\Controllers\Api\NesaiController;
-use App\Http\Controllers\Api\PublicAdmissionStatController;
-use App\Http\Controllers\Api\PublicAlumniController;
-use App\Http\Controllers\Api\PublicAlumniTrackingController;
-use App\Http\Controllers\Api\PublicContentController;
-use App\Http\Controllers\Api\PublicExtracurricularController;
-use App\Http\Controllers\Api\PublicFacilityController;
-use App\Http\Controllers\Api\PublicFaqController;
-use App\Http\Controllers\Api\PublicInnovationController;
-use App\Http\Controllers\Api\PublicMajorController;
-use App\Http\Controllers\Api\PublicNewsController;
-use App\Http\Controllers\Api\PublicPpdbController;
-use App\Http\Controllers\Api\PublicSchoolController;
+use App\Http\Controllers\Api\Public;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\SearchController;
 use Illuminate\Support\Facades\Route;
@@ -47,21 +24,21 @@ Route::prefix('v1')->group(function (): void {
     // 2. PUBLIC ENDPOINTS (Web Sekolah & Chatbot)
     // Akses publik (read-only tanpa Bearer token)
     // ==========================================
-    Route::get('/school', [PublicSchoolController::class, 'show']);
-    Route::get('/majors', [PublicMajorController::class, 'index']);
-    Route::get('/majors/{slug}', [PublicMajorController::class, 'show']);
-    Route::get('/facilities', [PublicFacilityController::class, 'index']);
-    Route::get('/extracurriculars', [PublicExtracurricularController::class, 'index']);
-    Route::get('/innovations', [PublicInnovationController::class, 'index']);
-    Route::get('/admission-stats', [PublicAdmissionStatController::class, 'index']);
-    Route::get('/alumni-tracking-stats', [PublicAlumniTrackingController::class, 'index']);
-    Route::get('/alumni', [PublicAlumniController::class, 'index']);
-    Route::get('/news', [PublicNewsController::class, 'index']);
-    Route::get('/news/{slug}', [PublicNewsController::class, 'show']);
-    Route::get('/ppdb', [PublicPpdbController::class, 'show']);
-    Route::get('/faqs', [PublicFaqController::class, 'index']);
-    Route::get('/contents', [PublicContentController::class, 'index']);
-    Route::get('/contents/{slug}', [PublicContentController::class, 'show']);
+    Route::get('/school', [Public\SchoolController::class, 'show']);
+    Route::get('/majors', [Public\MajorController::class, 'index']);
+    Route::get('/majors/{slug}', [Public\MajorController::class, 'show']);
+    Route::get('/facilities', [Public\FacilityController::class, 'index']);
+    Route::get('/extracurriculars', [Public\ExtracurricularController::class, 'index']);
+    Route::get('/innovations', [Public\InnovationController::class, 'index']);
+    Route::get('/admission-stats', [Public\AdmissionStatController::class, 'index']);
+    Route::get('/alumni-tracking-stats', [Public\AlumniTrackingController::class, 'index']);
+    Route::get('/alumni', [Public\AlumniController::class, 'index']);
+    Route::get('/news', [Public\NewsController::class, 'index']);
+    Route::get('/news/{slug}', [Public\NewsController::class, 'show']);
+    Route::get('/ppdb', [Public\PpdbController::class, 'show']);
+    Route::get('/faqs', [Public\FaqController::class, 'index']);
+    Route::get('/contents', [Public\ContentController::class, 'index']);
+    Route::get('/contents/{slug}', [Public\ContentController::class, 'show']);
 
     // Utility & AI Services
     Route::get('/health', HealthController::class);
@@ -79,26 +56,26 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/auth/me', [AuthController::class, 'me']);
 
         // Dashboard Stats
-        Route::get('/dashboard/metrics', [AdminDashboardController::class, 'metrics']);
+        Route::get('/dashboard/metrics', [Admin\DashboardController::class, 'metrics']);
 
         // Profil Sekolah (Single Instance)
-        Route::get('/school', [AdminSchoolController::class, 'show']);
-        Route::put('/school', [AdminSchoolController::class, 'update']);
+        Route::get('/school', [Admin\SchoolController::class, 'show']);
+        Route::put('/school', [Admin\SchoolController::class, 'update']);
 
         // CRUD Modul
-        Route::apiResource('majors', AdminMajorController::class);
-        Route::apiResource('facilities', AdminFacilityController::class);
-        Route::apiResource('extracurriculars', AdminExtracurricularController::class);
-        Route::apiResource('innovations', AdminInnovationController::class);
-        Route::apiResource('admission-stats', AdminAdmissionStatController::class);
-        Route::apiResource('alumni-tracking-stats', AdminAlumniTrackingController::class);
-        Route::apiResource('alumni', AdminAlumniController::class);
-        Route::apiResource('news', AdminNewsController::class);
-        Route::apiResource('faqs', AdminFaqController::class);
-        Route::apiResource('contents', AdminContentController::class);
+        Route::apiResource('majors', Admin\MajorController::class);
+        Route::apiResource('facilities', Admin\FacilityController::class);
+        Route::apiResource('extracurriculars', Admin\ExtracurricularController::class);
+        Route::apiResource('innovations', Admin\InnovationController::class);
+        Route::apiResource('admission-stats', Admin\AdmissionStatController::class);
+        Route::apiResource('alumni-tracking-stats', Admin\AlumniTrackingController::class);
+        Route::apiResource('alumni', Admin\AlumniController::class);
+        Route::apiResource('news', Admin\NewsController::class);
+        Route::apiResource('faqs', Admin\FaqController::class);
+        Route::apiResource('contents', Admin\ContentController::class);
 
         // PPDB Settings (Get & Update)
-        Route::get('/ppdb', [AdminPpdbController::class, 'show']);
-        Route::put('/ppdb', [AdminPpdbController::class, 'update']);
+        Route::get('/ppdb', [Admin\PpdbController::class, 'show']);
+        Route::put('/ppdb', [Admin\PpdbController::class, 'update']);
     });
 });

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AlumniTrackingStat;
@@ -8,7 +8,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class AdminAlumniTrackingController extends Controller
+class AlumniTrackingController extends Controller
 {
     use ApiResponse;
 

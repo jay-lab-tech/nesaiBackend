@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Extracurricular;
@@ -8,7 +8,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PublicExtracurricularController extends Controller
+class ExtracurricularController extends Controller
 {
     use ApiResponse;
 
@@ -20,7 +20,7 @@ class PublicExtracurricularController extends Controller
             $query->where('category', $request->query('category'));
         }
 
-        $extracurriculars = $query->orderBy('name', 'asc')->get();
+        $extracurriculars = $query->get();
 
         return $this->successResponse($extracurriculars, 'Daftar ekstrakurikuler berhasil diambil.');
     }

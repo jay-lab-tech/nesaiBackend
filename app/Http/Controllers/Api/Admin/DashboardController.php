@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Alumni;
@@ -15,7 +15,7 @@ use App\Models\School;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
-class AdminDashboardController extends Controller
+class DashboardController extends Controller
 {
     use ApiResponse;
 

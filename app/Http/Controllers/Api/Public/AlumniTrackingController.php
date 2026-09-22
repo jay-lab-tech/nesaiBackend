@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\AlumniTrackingStat;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
-class PublicAlumniTrackingController extends Controller
+class AlumniTrackingController extends Controller
 {
     use ApiResponse;
 

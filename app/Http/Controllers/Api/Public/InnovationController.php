@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Innovation;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
-class PublicInnovationController extends Controller
+class InnovationController extends Controller
 {
     use ApiResponse;
 

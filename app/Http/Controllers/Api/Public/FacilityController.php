@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
@@ -8,7 +8,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class PublicFacilityController extends Controller
+class FacilityController extends Controller
 {
     use ApiResponse;
 
@@ -20,8 +20,8 @@ class PublicFacilityController extends Controller
             $query->where('category', $request->query('category'));
         }
 
-        $facilities = $query->orderBy('name', 'asc')->get();
+        $facilities = $query->get();
 
-        return $this->successResponse($facilities, 'Daftar sarana & prasarana berhasil diambil.');
+        return $this->successResponse($facilities, 'Daftar sarana prasarana berhasil diambil.');
     }
 }

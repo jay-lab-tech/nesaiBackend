@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers\Api\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
-class PublicFaqController extends Controller
+class FaqController extends Controller
 {
     use ApiResponse;
 

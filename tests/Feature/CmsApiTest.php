@@ -171,4 +171,94 @@ class CmsApiTest extends TestCase
         $logoutResponse->assertStatus(200)
             ->assertJson(['success' => true]);
     }
+
+    public function test_public_and_admin_modules_crud_flow(): void
+    {
+        $user = User::where('email', 'admin@smkn1subang.sch.id')->first();
+        $token = $user->createToken('test-token')->plainTextToken;
+        $headers = ['Authorization' => 'Bearer ' . $token];
+
+        // 1. Facility CRUD
+        $facResponse = $this->postJson('/api/v1/admin/facilities', [
+            'name' => 'Lab Komputer RPL',
+            'category' => 'Laboratorium',
+        ], $headers);
+        $facResponse->assertStatus(201);
+        $facilityId = $facResponse->json('data.id');
+
+        $this->getJson('/api/v1/facilities')
+            ->assertStatus(200)
+            ->assertJsonFragment(['name' => 'Lab Komputer RPL']);
+
+        $this->putJson("/api/v1/admin/facilities/{$facilityId}", [
+            'name' => 'Lab Komputer RPL Modern',
+            'category' => 'Laboratorium',
+        ], $headers)->assertStatus(200);
+
+        // 2. Extracurricular CRUD
+        $exResponse = $this->postJson('/api/v1/admin/extracurriculars', [
+            'name' => 'Paskibra',
+            'category' => 'Kepemimpinan',
+        ], $headers);
+        $exResponse->assertStatus(201);
+
+        $this->getJson('/api/v1/extracurriculars')
+            ->assertStatus(200)
+            ->assertJsonFragment(['name' => 'Paskibra']);
+
+        // 3. FAQ CRUD
+        $faqResponse = $this->postJson('/api/v1/admin/faqs', [
+            'question' => 'Kapan PPDB dibuka?',
+            'answer' => 'PPDB dibuka mulai bulan Mei.',
+            'sort_order' => 1,
+        ], $headers);
+        $faqResponse->assertStatus(201);
+
+        $this->getJson('/api/v1/faqs')
+            ->assertStatus(200)
+            ->assertJsonFragment(['question' => 'Kapan PPDB dibuka?']);
+
+        // 4. PPDB Update and Public Show
+        $this->putJson('/api/v1/admin/ppdb', [
+            'title' => 'PPDB Tahun 2026/2027',
+            'description' => 'Pendaftaran peserta didik baru.',
+            'requirements' => ['Ijazah SMP', 'Kartu Keluarga'],
+            'schedule' => [
+                ['stage' => 'Tahap 1', 'date' => 'Juni 2026', 'desc' => 'Jalur Afirmasi'],
+            ],
+            'is_active' => true,
+        ], $headers)->assertStatus(200);
+
+        $this->getJson('/api/v1/ppdb')
+            ->assertStatus(200)
+            ->assertJsonFragment(['title' => 'PPDB Tahun 2026/2027']);
+
+        // 5. School Profile Admin Update
+        $this->putJson('/api/v1/admin/school', [
+            'name' => 'SMK Negeri 1 Subang Unggul',
+            'npsn' => '20233680',
+            'address' => 'Jl. Arif Rahman Hakim No. 35 Subang',
+            'student_count' => 1600,
+        ], $headers)->assertStatus(200);
+
+        $this->getJson('/api/v1/school')
+            ->assertStatus(200)
+            ->assertJsonFragment(['name' => 'SMK Negeri 1 Subang Unggul']);
+
+        // 6. Content CRUD
+        $contentResponse = $this->postJson('/api/v1/admin/contents', [
+            'title' => 'Sejarah Sekolah',
+            'type' => 'page',
+            'module' => 'about',
+            'body' => 'Didirikan pada tahun 1968...',
+            'is_published' => true,
+        ], $headers);
+        $contentResponse->assertStatus(201);
+        $contentSlug = $contentResponse->json('data.slug');
+
+        $this->getJson("/api/v1/contents/{$contentSlug}")
+            ->assertStatus(200)
+            ->assertJsonFragment(['title' => 'Sejarah Sekolah']);
+    }
 }
+
