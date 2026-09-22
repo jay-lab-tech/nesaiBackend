@@ -1,4 +1,14 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
-class News extends Model { protected $guarded = []; protected function casts(): array { return ['published_at' => 'datetime']; } }
+
+class News extends Model
+{
+    protected $guarded = ['id'];
+
+    protected $casts = [
+        'published_at' => 'datetime',
+    ];
+}

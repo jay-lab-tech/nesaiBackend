@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -15,6 +14,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Intentionally empty: only verified SMKN 1 Subang data may be seeded.
+        // Data ASLI SMKN 1 Subang: school, majors, alumni, sarana, ekskul,
+        // karya inovasi, statistik SPMB & tracking alumni.
+        $this->call(SchoolPublicDataSeeder::class);
+
+        // Data PLACEHOLDER untuk News/PPDB/FAQ — ganti begitu konten resmi tersedia.
+        $this->call(DummySchoolDataSeeder::class);
+
+        // Akun default Administrator CMS
+        $this->call(AdminUserSeeder::class);
     }
 }
