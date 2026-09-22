@@ -38,8 +38,10 @@ class SchoolPublicDataSeeder extends Seeder
             'area_size' => '18.882 m2',
             'principal_name' => 'Walyati Retnoningsih, S.Si., M.AP',
             'staff_count' => 159,
-            'student_count' => null,
+            'student_count' => 2589,
             'classroom_count' => null,
+            'classroom_count_min' => 50,
+            'classroom_count_max' => 52,
             'stats_updated_at' => null,
             'description' => 'SMK Negeri 1 Subang adalah sekolah menengah kejuruan negeri di Kabupaten Subang, Jawa Barat, terakreditasi A, dengan program unggulan BerAKSI (Berkarakter, Adaptif, Kompeten, Sinergis, Inovatif).',
             'vision' => 'Menjadikan Lulusan yang Berkarakter Agamis, Berjiwa Wirausaha, Mampu Beradaptasi dengan Perkembangan Zaman, Kompeten di Bidangnya, Peduli Terhadap Lingkungan dan menerapkan BLUD pada Tahun 2029.',
@@ -194,7 +196,45 @@ class SchoolPublicDataSeeder extends Seeder
             'Aula Mimake', 'Taman Membaca', 'Laboratorium Komputer',
         ];
         foreach ($facilities as $name) {
-            Facility::updateOrCreate(['name' => $name], ['category' => null]);
+            Facility::updateOrCreate(
+                ['name' => $name],
+                [
+                    'category' => 'fasilitas umum',
+                    'quantity' => 1,
+                    'is_placeholder' => false,
+                ],
+            );
+        }
+
+        // Inventaris lab per jurusan. Detail teknis masih placeholder dan
+        // harus diganti setelah sekolah memberikan spesifikasi resmi.
+        $laboratories = [
+            ['name' => 'Laboratorium RPL', 'major' => 'Pengembangan Perangkat Lunak dan Gim', 'quantity' => 1],
+            ['name' => 'Laboratorium TKJ', 'major' => 'Teknik Jaringan Komputer dan Telekomunikasi', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 1', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 2', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium MPLB 3', 'major' => 'Manajemen Perkantoran dan Layanan Bisnis', 'quantity' => 1],
+            ['name' => 'Laboratorium Pemasaran', 'major' => 'Pemasaran', 'quantity' => 1],
+            ['name' => 'Laboratorium DKV 1', 'major' => 'Desain Komunikasi Visual', 'quantity' => 1],
+            ['name' => 'Laboratorium DKV 2', 'major' => 'Desain Komunikasi Visual', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Otomotif', 'major' => 'Teknik Otomotif', 'quantity' => 1],
+            ['name' => 'Laboratorium AKL', 'major' => 'Akuntansi dan Keuangan Lembaga', 'quantity' => 1],
+            ['name' => 'Laboratorium Kuliner', 'major' => 'Kuliner', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Mesin', 'major' => 'Teknik Mesin', 'quantity' => 1],
+            ['name' => 'Laboratorium Teknik Logistik', 'major' => 'Teknik Logistik', 'quantity' => 1],
+        ];
+
+        foreach ($laboratories as $laboratory) {
+            Facility::updateOrCreate(
+                ['name' => $laboratory['name']],
+                [
+                    'major_id' => $majorsByName[$laboratory['major']]->id ?? null,
+                    'category' => 'laboratorium',
+                    'quantity' => $laboratory['quantity'],
+                    'description' => 'Detail teknis laboratorium masih placeholder/fiktif dan menunggu verifikasi sekolah.',
+                    'is_placeholder' => true,
+                ],
+            );
         }
 
         // Ekstrakurikuler.
