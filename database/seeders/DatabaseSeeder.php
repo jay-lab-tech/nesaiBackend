@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
 
         // Data PLACEHOLDER untuk News/PPDB/FAQ — ganti begitu konten resmi tersedia.
         $this->call(DummySchoolDataSeeder::class);
+
+        // Akun default Administrator CMS
+        $this->call(AdminUserSeeder::class);
     }
 }

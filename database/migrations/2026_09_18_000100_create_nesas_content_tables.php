@@ -19,9 +19,9 @@ return new class extends Migration
             $t->unsignedSmallInteger('founded_year')->nullable();
             $t->string('area_size')->nullable();
             $t->string('principal_name')->nullable();
-            $t->unsignedInteger('staff_count')->nullable();
-            $t->unsignedInteger('student_count')->nullable();
-            $t->unsignedInteger('classroom_count')->nullable();
+            $t->unsignedInteger('staff_count')->default(0)->nullable();
+            $t->unsignedInteger('student_count')->default(0)->nullable();
+            $t->unsignedInteger('classroom_count')->default(0)->nullable();
             $t->timestamp('stats_updated_at')->nullable();
             $t->text('description')->nullable();
             $t->text('vision')->nullable();
@@ -70,6 +70,7 @@ return new class extends Migration
             $t->string('slug')->unique();
             $t->text('excerpt')->nullable();
             $t->longText('body')->nullable();
+            $t->string('thumbnail')->nullable();
             $t->timestamp('published_at')->nullable()->index();
             $t->timestamps();
         });
@@ -130,7 +131,7 @@ return new class extends Migration
             $t->id();
             $t->foreignId('major_id')->constrained()->cascadeOnDelete();
             $t->unsignedSmallInteger('year');
-            $t->unsignedInteger('applicant_count');
+            $t->unsignedInteger('applicant_count')->default(0);
             $t->timestamps();
             $t->unique(['major_id', 'year']);
         });

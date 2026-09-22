@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Alumni extends Model
 {
     protected $table = 'alumni';
-    protected $guarded = [];
+    protected $guarded = ['id'];
+
     public function major()
     {
         return $this->belongsTo(Major::class);
