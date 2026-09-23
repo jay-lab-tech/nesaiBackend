@@ -57,6 +57,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Akuntansi dan Keuangan Lembaga',
                 'summary' => 'Pembukuan dan administrasi keuangan untuk perusahaan dan instansi.',
+                'logo' => 'majors/akl.svg',
                 'subjects' => ['Etika Profesi', 'Spreadsheet', 'Akuntansi Dasar', 'Perbankan Dasar', 'Praktikum Akuntansi', 'Komputer Akuntansi', 'Administrasi Pajak'],
                 'careers' => ['Staf Akuntansi', 'Administrasi Keuangan', 'Staf Bank', 'Staf Pajak', 'Wirausaha'],
                 'note' => 'Mitra industri: PT BPR Karya Utama Jabar; KAP Bambang Moedjiono dan Rekan; BRI; BJB; BTN.',
@@ -64,6 +65,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Pemasaran',
                 'summary' => 'Penjualan, promosi, pelayanan konsumen, bisnis ritel, e-commerce, dan pemasaran digital. Konsentrasi Bisnis Ritel dan Bisnis Digital.',
+                'logo' => 'majors/bdp.svg',
                 'subjects' => ['Dasar Bisnis Ritel', 'Penanganan Produk', 'Penjualan', 'Persediaan', 'Perencanaan Bisnis', 'Teknologi Ritel', 'Promosi', 'Bisnis Digital'],
                 'careers' => ['Pramuniaga', 'Kasir', 'Staf Toko', 'Admin Online Shop', 'Digital Marketer', 'Content Creator', 'Customer Service', 'Wirausaha'],
                 'note' => 'Mitra industri: PT Akur Pratama (Yogya Grup); Griya; Yomart; Amanda Mart; Jerbee.',
@@ -71,6 +73,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Manajemen Perkantoran dan Layanan Bisnis',
                 'summary' => 'Administrasi perkantoran, pelayanan bisnis, dokumen, teknologi perkantoran, dan layanan pelanggan.',
+                'logo' => 'majors/mplb.svg',
                 'subjects' => ['Proses Bisnis Manajemen', 'Ekonomi Bisnis', 'Dokumen Digital', 'Teknologi Perkantoran', 'Administrasi', 'Kearsipan', 'Kehumasan'],
                 'careers' => ['Staf Administrasi', 'Resepsionis', 'Arsiparis', 'Sekretaris', 'Layanan Pelanggan', 'Operator Komputer', 'Wirausaha'],
                 'note' => 'Mitra industri: PT Bino Mitra Sejati; Aston Hotel; ASPAPI Jawa Barat; Pegadaian; BJB; PERURI.',
@@ -78,6 +81,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Pengembangan Perangkat Lunak dan Gim',
                 'summary' => 'Analisis, perancangan, pembuatan, pengujian, dan pemeliharaan perangkat lunak desktop, web, dan mobile.',
+                'logo' => 'majors/rpl.svg',
                 'subjects' => ['Pemrograman Dasar', 'Jaringan', 'Sistem Komputer', 'Kerja Proyek', 'Database', 'Pemrograman Web dan Perangkat Bergerak', 'Java', 'Android Studio'],
                 'careers' => ['Web Developer', 'Software/Mobile Developer', 'Programmer', 'Teknisi IT', 'Pengembang Gim', 'Freelancer', 'Wirausaha'],
                 'note' => 'Mitra industri: PT Jerbee Indonesia; PT Surya Tekno Mandiri (ESTIMA); LontarLab; Zimgba; Makerindo; Thawaf; Masagi.',
@@ -85,6 +89,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Teknik Jaringan Komputer dan Telekomunikasi',
                 'summary' => 'Instalasi, konfigurasi, pemeliharaan, dan perbaikan komputer serta LAN, internet, Wi-Fi, dan fiber optik.',
+                'logo' => 'majors/tkj.svg',
                 'subjects' => ['Komputer dan Jaringan Dasar', 'Pemrograman', 'Desain Grafis', 'WAN', 'Administrasi Infrastruktur', 'Administrasi Sistem', 'Layanan Jaringan'],
                 'careers' => ['Teknisi Komputer/Jaringan', 'Teknisi Internet/Wi-Fi/CCTV', 'IT Support', 'Administrator Jaringan', 'Wirausaha'],
                 'note' => 'Mitra industri: PT Jerbee Indonesia; Media Distribusi Prima; LontarLab; Zimgba.',
@@ -92,6 +97,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Teknik Otomotif',
                 'summary' => 'Perawatan dan perbaikan kendaraan roda dua untuk menjadi mekanik junior atau wirausaha bengkel.',
+                'logo' => 'majors/to.svg',
                 'subjects' => ['Perawatan Berkala', 'Perbaikan Engine', 'Sasis', 'Kelistrikan', 'Perawatan Bengkel', 'Produk Kreatif'],
                 'careers' => ['Mekanik Junior', 'Mekanik Resmi/Umum', 'Service Advisor', 'Teknisi', 'Wirausaha Bengkel'],
                 'note' => 'Mitra industri: PT Astra Honda Motor; PT Daya Adicipta Motora; AHASS Golden Motor; Hyundai Safety Riding Center; AutoGas.',
@@ -99,6 +105,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Desain Komunikasi Visual',
                 'summary' => 'Penerapan keterampilan seni dan komunikasi untuk kebutuhan industri maupun karya seni — meliputi desain tata letak, warna, gambar, ilustrasi, tipografi, videografi, fotografi, edit foto/video, dan animasi.',
+                'logo' => 'majors/dkv.svg',
                 'subjects' => ['Desain Tata Letak', 'Ilustrasi', 'Tipografi', 'Videografi', 'Fotografi', 'Edit Foto dan Video', 'Animasi'],
                 'careers' => [],
                 'note' => 'Unit Produksi DKV memproduksi desain banner, stiker, souvenir, ID card, akrilik, name tag, sablon kaos, poster, dan jasa dokumentasi. Mitra: Gulali Books; DEA Grafika; Polycloth; Sintesa; Jonas Photo; Mutfin Graphics.',
@@ -106,6 +113,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Teknik Mesin',
                 'summary' => 'Produksi komponen mesin dan otomotif menggunakan mesin konvensional maupun CNC.',
+                'logo' => 'majors/tm.svg',
                 'subjects' => ['Gambar Teknik', 'Pekerjaan Dasar Mesin', 'Bubut', 'Frais', 'Gerinda', 'CNC', 'CADD'],
                 'careers' => ['Operator Bubut/Frais/CNC', 'Teknisi Manufaktur', 'Drafter', 'Quality Control', 'Wirausaha'],
                 'note' => 'Mitra industri: PT Teknik Jaya Component; PT Pudak Scientific; Pindad.',
@@ -113,6 +121,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Kuliner',
                 'summary' => 'Pengolahan makanan, penyajian, pelayanan makanan dan minuman, keamanan pangan, dan usaha kuliner.',
+                'logo' => 'majors/kuliner.svg',
                 'subjects' => ['Keamanan Pangan', 'Bahan Makanan', 'Ilmu Gizi', 'Tata Hidang', 'Pengolahan', 'Cake dan Kue', 'Pastry dan Bakery'],
                 'careers' => ['Staf Kitchen', 'Staf Service', 'Cook Helper', 'Pastry', 'Pramusaji', 'Katering', 'Wirausaha'],
                 'note' => 'Mitra industri: Hotel Aston Pasteur Bandung; Sari Ater Hotels & Resorts; Grant Hotel Subang.',
@@ -120,6 +129,7 @@ class SchoolPublicDataSeeder extends Seeder
             [
                 'name' => 'Teknik Logistik',
                 'summary' => 'Perencanaan, pengendalian, penyimpanan, pemindahan, dan distribusi barang.',
+                'logo' => 'majors/logistik.svg',
                 'subjects' => ['Gambar Teknik', 'Penanganan Material', 'Persediaan', 'Administrasi Gudang', 'Pergudangan', 'Material Handling Equipment', 'Logistik Multimoda'],
                 'careers' => ['Procurement', 'Operator MHE', 'Logistic Operator', 'Administrasi', 'Delivery', 'Sorting', 'Staf Gudang'],
                 'note' => 'Mitra industri: Politeknik Pos Indonesia; PT Pos Logistik Indonesia; PT Pos Indonesia; Toyota Indonesia; ULBI.',
@@ -137,7 +147,9 @@ class SchoolPublicDataSeeder extends Seeder
                 'slug' => Str::slug($data['name']),
                 'summary' => $data['summary'],
                 'description' => trim($description),
+                'logo' => $data['logo'] ?? null,
             ]);
+
 
             $majorsByName[$data['name']] = $major;
 

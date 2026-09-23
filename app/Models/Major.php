@@ -6,7 +6,30 @@ use Illuminate\Database\Eloquent\Model;
 
 class Major extends Model
 {
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'slug',
+        'summary',
+        'description',
+        'logo',
+    ];
+
+    protected $appends = [
+        'logo_url',
+    ];
+
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (empty($this->logo)) {
+            return null;
+        }
+
+        if (str_starts_with($this->logo, 'http://') || str_starts_with($this->logo, 'https://')) {
+            return $this->logo;
+        }
+
+        return asset('storage/' . ltrim($this->logo, '/'));
+    }
 
     public function subjects()
     {

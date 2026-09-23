@@ -7,6 +7,7 @@ use App\Models\Major;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MajorController extends Controller
@@ -30,11 +31,16 @@ class MajorController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $logoRule = $request->hasFile('logo')
+            ? ['nullable', 'image', 'mimes:jpeg,png,jpg,svg,webp', 'max:2048']
+            : ['nullable', 'string', 'max:2048'];
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:majors,slug'],
             'summary' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
+            'logo' => $logoRule,
             'subjects' => ['nullable', 'array'],
             'subjects.*.name' => ['required_with:subjects', 'string', 'max:255'],
             'subjects.*.description' => ['nullable', 'string'],
@@ -47,11 +53,19 @@ class MajorController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
+        $logoPath = null;
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('majors', 'public');
+        } elseif (!empty($validated['logo'])) {
+            $logoPath = $validated['logo'];
+        }
+
         $major = Major::create([
             'name' => $validated['name'],
             'slug' => $validated['slug'],
             'summary' => $validated['summary'] ?? null,
             'description' => $validated['description'] ?? null,
+            'logo' => $logoPath,
         ]);
 
         if (!empty($validated['subjects'])) {
@@ -90,11 +104,16 @@ class MajorController extends Controller
             return $this->errorResponse('Jurusan tidak ditemukan.', 404);
         }
 
+        $logoRule = $request->hasFile('logo')
+            ? ['nullable', 'image', 'mimes:jpeg,png,jpg,svg,webp', 'max:2048']
+            : ['nullable', 'string', 'max:2048'];
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', "unique:majors,slug,{$id}"],
             'summary' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],
+            'logo' => $logoRule,
             'subjects' => ['nullable', 'array'],
             'subjects.*.name' => ['required_with:subjects', 'string', 'max:255'],
             'subjects.*.description' => ['nullable', 'string'],
@@ -107,12 +126,27 @@ class MajorController extends Controller
             $validated['slug'] = Str::slug($validated['name']);
         }
 
-        $major->update([
+        $updateData = [
             'name' => $validated['name'],
             'slug' => $validated['slug'],
             'summary' => $validated['summary'] ?? null,
             'description' => $validated['description'] ?? null,
-        ]);
+        ];
+
+        if ($request->hasFile('logo')) {
+            if ($major->logo && !Str::startsWith($major->logo, ['http://', 'https://'])) {
+                Storage::disk('public')->delete($major->logo);
+            }
+            $updateData['logo'] = $request->file('logo')->store('majors', 'public');
+        } elseif ($request->has('logo')) {
+            $newLogo = $validated['logo'] ?? null;
+            if ($newLogo !== $major->logo && $major->logo && !Str::startsWith($major->logo, ['http://', 'https://'])) {
+                Storage::disk('public')->delete($major->logo);
+            }
+            $updateData['logo'] = $newLogo;
+        }
+
+        $major->update($updateData);
 
         if (isset($validated['subjects'])) {
             $major->subjects()->delete();
@@ -141,8 +175,13 @@ class MajorController extends Controller
             return $this->errorResponse('Jurusan tidak ditemukan.', 404);
         }
 
+        if ($major->logo && !Str::startsWith($major->logo, ['http://', 'https://'])) {
+            Storage::disk('public')->delete($major->logo);
+        }
+
         $major->delete();
 
         return $this->successResponse(null, 'Jurusan berhasil dihapus.');
     }
 }
+
