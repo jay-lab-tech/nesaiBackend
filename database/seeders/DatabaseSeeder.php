@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
         // Data ASLI SMKN 1 Subang: school, majors, alumni, sarana, ekskul,
         // karya inovasi, statistik SPMB & tracking alumni.
         $this->call(SchoolPublicDataSeeder::class);
-
+        $this->call(AdminUserSeeder::class);
         // DummySchoolDataSeeder tidak dijalankan otomatis. Data placeholder
         // tidak boleh tampil sebagai data resmi pada environment aplikasi.
     }
