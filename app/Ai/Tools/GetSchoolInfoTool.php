@@ -5,6 +5,7 @@ namespace App\Ai\Tools;
 use App\Models\Extracurricular;
 use App\Models\Facility;
 use App\Models\Innovation;
+use App\Models\News;
 use App\Models\School;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Support\Facades\Cache;
@@ -56,7 +57,8 @@ class GetSchoolInfoTool implements Tool
         'karya_inovasi' => ['karya_inovasi'],
         'haki' => ['karya_inovasi'],
         'produk' => ['karya_inovasi'],
-        'prestasi' => ['karya_inovasi', 'program_unggulan'],
+        'prestasi' => ['berita_prestasi', 'program_unggulan'],
+        'berita' => ['berita_prestasi'],
     ];
 
     /**
@@ -72,7 +74,7 @@ class GetSchoolInfoTool implements Tool
      */
     public function description(): Stringable|string
     {
-        return 'Mengambil informasi profil resmi SMKN 1 Subang langsung dari database: identitas sekolah (nama, NPSN, akreditasi), kepala sekolah, jumlah siswa/guru/kelas, alamat & lokasi peta, kontak (telepon, email, website), media sosial, visi-misi, sejarah, sarana prasarana/fasilitas, ekstrakurikuler, karya inovasi siswa/produk HAKI (seperti Motocimic, Nesasserator, Siborin), dan program unggulan. Gunakan tool ini saat pengguna bertanya tentang profil, identitas, pimpinan, statistik, lokasi, kontak, karya/inovasi/produk siswa, atau visi-misi sekolah.';
+        return 'Mengambil informasi profil resmi SMKN 1 Subang langsung dari database: identitas sekolah (nama, NPSN, akreditasi), kepala sekolah, jumlah siswa/guru/kelas, alamat & lokasi peta, kontak (telepon, email, website), media sosial, visi-misi, sejarah, sarana prasarana/fasilitas, ekstrakurikuler, karya inovasi siswa/produk HAKI (seperti Motocimic, Nesasserator, Siborin), serta program unggulan. Untuk berita dan catatan prestasi lomba lengkap, gunakan tool get_news_info.';
     }
 
     /**
@@ -83,7 +85,7 @@ class GetSchoolInfoTool implements Tool
         // [CORE-LOGIC: DATABASE-FIRST-SOURCE]
         // Mengambil data profil sekolah resmi dari database (School model) dengan caching layer
         // untuk response time ultra cepat (<10ms) dan deterministik.
-        $schoolData = Cache::remember('nesai:school_profile_v3', 3600, function () {
+        $schoolData = Cache::remember('nesai:school_profile_v4', 3600, function () {
             $school = School::first();
 
             $facilityCount = Facility::count();
@@ -99,6 +101,20 @@ class GetSchoolInfoTool implements Tool
                 ];
             })->toArray();
 
+            $recentNews = News::whereNotNull('published_at')
+                ->where('published_at', '<=', now())
+                ->orderBy('published_at', 'desc')
+                ->take(5)
+                ->get(['title', 'slug', 'excerpt', 'published_at'])
+                ->map(function ($news) {
+                    return [
+                        'judul' => $news->title,
+                        'slug' => $news->slug,
+                        'ringkasan' => $news->excerpt,
+                        'tanggal' => $news->published_at?->format('d F Y') ?? '-',
+                    ];
+                })->toArray();
+
             $fallbackConfig = config('school', []);
 
             if (empty($innovations) && ! empty($fallbackConfig['karya_inovasi'])) {
@@ -108,6 +124,7 @@ class GetSchoolInfoTool implements Tool
             if (! $school) {
                 $profile = $fallbackConfig;
                 $profile['karya_inovasi'] = $innovations;
+                $profile['berita_prestasi'] = $recentNews;
                 return $profile;
             }
 
@@ -147,6 +164,7 @@ class GetSchoolInfoTool implements Tool
                 'ringkasan_fasilitas' => $facilities,
                 'ekstrakurikuler' => $extracurriculars,
                 'karya_inovasi' => $innovations,
+                'berita_prestasi' => $recentNews,
                 'sejarah' => $fallbackConfig['sejarah'] ?? 'Didirikan pada tahun 1965 sebagai salah satu SMK perintis di Kabupaten Subang.',
             ];
         });

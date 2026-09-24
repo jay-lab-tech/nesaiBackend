@@ -83,12 +83,20 @@ class NesaiService
 
                     if ($toolResult->name === 'get_school_info') {
                         $sources[] = 'Basis Data Profil Resmi & Karya Inovasi (Database SMKN 1 Subang)';
-                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|prestasi|produk/i', $message);
+                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|produk/i', $message);
+                        $isPrestasiQuery = (bool) preg_match('/prestasi|juara|lomba|kejuaraan/i', $message);
+
                         if ($isInnovationQuery) {
                             $actions[] = [
                                 'type' => 'navigate',
                                 'path' => '/prestasi',
-                                'title' => 'Lihat Prestasi & Inovasi SMKN 1 Subang',
+                                'title' => 'Lihat Karya Inovasi Siswa',
+                            ];
+                        } elseif ($isPrestasiQuery) {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/berita',
+                                'title' => 'Lihat Berita & Prestasi di Portal Berita',
                             ];
                         } else {
                             $actions[] = [
@@ -97,6 +105,15 @@ class NesaiService
                                 'title' => 'Lihat Profil SMKN 1 Subang',
                             ];
                         }
+                    }
+
+                    if ($toolResult->name === 'get_news_info') {
+                        $sources[] = 'Portal Berita & Prestasi Resmi (Database SMKN 1 Subang)';
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/berita',
+                            'title' => 'Lihat Portal Berita & Prestasi',
+                        ];
                     }
 
                     if ($toolResult->name === 'get_ppdb_info') {
@@ -140,12 +157,20 @@ class NesaiService
 
                     if ($toolCall->name === 'get_school_info') {
                         $sources[] = 'Basis Data Profil Resmi & Karya Inovasi (Database SMKN 1 Subang)';
-                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|prestasi|produk/i', $message);
+                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|produk/i', $message);
+                        $isPrestasiQuery = (bool) preg_match('/prestasi|juara|lomba|kejuaraan/i', $message);
+
                         if ($isInnovationQuery) {
                             $actions[] = [
                                 'type' => 'navigate',
                                 'path' => '/prestasi',
-                                'title' => 'Lihat Prestasi & Inovasi SMKN 1 Subang',
+                                'title' => 'Lihat Karya Inovasi Siswa',
+                            ];
+                        } elseif ($isPrestasiQuery) {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/berita',
+                                'title' => 'Lihat Berita & Prestasi di Portal Berita',
                             ];
                         } else {
                             $actions[] = [
@@ -154,6 +179,15 @@ class NesaiService
                                 'title' => 'Lihat Profil SMKN 1 Subang',
                             ];
                         }
+                    }
+
+                    if ($toolCall->name === 'get_news_info') {
+                        $sources[] = 'Portal Berita & Prestasi Resmi (Database SMKN 1 Subang)';
+                        $actions[] = [
+                            'type' => 'navigate',
+                            'path' => '/berita',
+                            'title' => 'Lihat Portal Berita & Prestasi',
+                        ];
                     }
 
                     if ($toolCall->name === 'get_ppdb_info') {
