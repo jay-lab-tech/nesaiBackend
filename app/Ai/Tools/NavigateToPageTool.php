@@ -36,6 +36,9 @@ class NavigateToPageTool implements Tool
         'karir' => ['path' => '/alumni', 'title' => 'Informasi & Jejak Alumni'],
         'kontak' => ['path' => '/kontak', 'title' => 'Hubungi SMKN 1 Subang'],
         'contact' => ['path' => '/kontak', 'title' => 'Hubungi SMKN 1 Subang'],
+        'prestasi' => ['path' => '/prestasi', 'title' => 'Prestasi & Karya Inovasi Siswa'],
+        'inovasi' => ['path' => '/prestasi', 'title' => 'Karya Inovasi Siswa SMKN 1 Subang'],
+        'karya' => ['path' => '/prestasi', 'title' => 'Karya Inovasi Siswa SMKN 1 Subang'],
         'pencarian' => ['path' => '/search', 'title' => 'Pencarian Informasi'],
         'search' => ['path' => '/search', 'title' => 'Pencarian Informasi'],
     ];
@@ -53,7 +56,7 @@ class NavigateToPageTool implements Tool
      */
     public function description(): Stringable|string
     {
-        return 'Menyarankan navigasi atau mengarahkan pengguna ke halaman tertentu di website SMKN 1 Subang (misalnya: PPDB, daftar jurusan, detail jurusan tertentu, berita, profil sekolah, alumni, kontak).';
+        return 'Menyarankan tombol tautan navigasi ke halaman website SMKN 1 Subang. HANYA gunakan jika pengguna meminta link atau menuju halaman tertentu. JANGAN gunakan tool ini sebagai pengganti jawaban pertanyaan profil/sekolah. Selalu utamakan menjawab data faktual di chat.';
     }
 
     /**

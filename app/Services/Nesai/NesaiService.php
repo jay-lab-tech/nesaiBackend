@@ -57,7 +57,7 @@ class NesaiService
                     }
 
                     if ($toolResult->name === 'recommend_jurusan') {
-                        $sources[] = 'Rekomendasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $sources[] = 'Sistem Rekomendasi Minat (Database SMKN 1 Subang)';
                         $intent = 'major_recommendation';
 
                         // Buatkan quick action navigasi ke jurusan teratas yang direkomendasikan
@@ -78,21 +78,29 @@ class NesaiService
                     }
 
                     if ($toolResult->name === 'get_jurusan_info') {
-                        $sources[] = 'Informasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $sources[] = 'Basis Data Kompetensi Keahlian (Database SMKN 1 Subang)';
                     }
 
                     if ($toolResult->name === 'get_school_info') {
-                        $sources[] = 'Profil Resmi SMKN 1 Subang (config/school.php)';
-                        // Tambahkan navigasi ke halaman profil dan kontak
-                        $actions[] = [
-                            'type' => 'navigate',
-                            'path' => '/profil',
-                            'title' => 'Lihat Profil SMKN 1 Subang',
-                        ];
+                        $sources[] = 'Basis Data Profil Resmi & Karya Inovasi (Database SMKN 1 Subang)';
+                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|prestasi|produk/i', $message);
+                        if ($isInnovationQuery) {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/prestasi',
+                                'title' => 'Lihat Prestasi & Inovasi SMKN 1 Subang',
+                            ];
+                        } else {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/profil',
+                                'title' => 'Lihat Profil SMKN 1 Subang',
+                            ];
+                        }
                     }
 
                     if ($toolResult->name === 'get_ppdb_info') {
-                        $sources[] = 'Informasi PPDB SMKN 1 Subang (config/ppdb.php)';
+                        $sources[] = 'Informasi PPDB Terkini (Database SMKN 1 Subang)';
                         $intent = 'ppdb_information';
                         // Tambahkan navigasi ke halaman PPDB
                         $actions[] = [
@@ -122,25 +130,34 @@ class NesaiService
                     }
 
                     if ($toolCall->name === 'recommend_jurusan') {
-                        $sources[] = 'Rekomendasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $sources[] = 'Sistem Rekomendasi Minat (Database SMKN 1 Subang)';
                         $intent = 'major_recommendation';
                     }
 
                     if ($toolCall->name === 'get_jurusan_info') {
-                        $sources[] = 'Informasi Jurusan SMKN 1 Subang (config/jurusan.php)';
+                        $sources[] = 'Basis Data Kompetensi Keahlian (Database SMKN 1 Subang)';
                     }
 
                     if ($toolCall->name === 'get_school_info') {
-                        $sources[] = 'Profil Resmi SMKN 1 Subang (config/school.php)';
-                        $actions[] = [
-                            'type' => 'navigate',
-                            'path' => '/profil',
-                            'title' => 'Lihat Profil SMKN 1 Subang',
-                        ];
+                        $sources[] = 'Basis Data Profil Resmi & Karya Inovasi (Database SMKN 1 Subang)';
+                        $isInnovationQuery = (bool) preg_match('/inovasi|karya|haki|prestasi|produk/i', $message);
+                        if ($isInnovationQuery) {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/prestasi',
+                                'title' => 'Lihat Prestasi & Inovasi SMKN 1 Subang',
+                            ];
+                        } else {
+                            $actions[] = [
+                                'type' => 'navigate',
+                                'path' => '/profil',
+                                'title' => 'Lihat Profil SMKN 1 Subang',
+                            ];
+                        }
                     }
 
                     if ($toolCall->name === 'get_ppdb_info') {
-                        $sources[] = 'Informasi PPDB SMKN 1 Subang (config/ppdb.php)';
+                        $sources[] = 'Informasi PPDB Terkini (Database SMKN 1 Subang)';
                         $intent = 'ppdb_information';
                         $actions[] = [
                             'type' => 'navigate',

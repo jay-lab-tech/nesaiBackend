@@ -122,4 +122,30 @@ return [
         'Logistik & Kuliner' => ['Teknik Logistik', 'Kuliner'],
     ],
 
+    // =========================================================================
+    // KARYA INOVASI SISWA (BER-HAKI)
+    // =========================================================================
+
+    'karya_inovasi' => [
+        [
+            'nama' => 'Motocimic',
+            'jurusan' => 'Teknik Otomotif',
+            'deskripsi' => 'Karya inovasi sepeda listrik ramah lingkungan karya siswa Teknik Otomotif, terdaftar resmi di HAKI.',
+            'terdaftar_haki' => true,
+        ],
+        [
+            'nama' => 'Nesasserator',
+            'jurusan' => 'Teknik Mesin',
+            'deskripsi' => 'Incinerator (mesin pembakar sampah tanpa asap kotor/polusi) ramah lingkungan karya siswa Teknik Mesin, terdaftar resmi di HAKI.',
+            'terdaftar_haki' => true,
+        ],
+        [
+            'nama' => 'Siborin',
+            'jurusan' => 'Pengembangan Perangkat Lunak dan Gim',
+            'deskripsi' => 'Standing Information Board — aplikasi papan informasi berdiri pintar, mendapat Hak Kekayaan Intelektual resmi dari Kementerian Hukum dan HAM.',
+            'terdaftar_haki' => true,
+        ],
+    ],
+
 ];
+

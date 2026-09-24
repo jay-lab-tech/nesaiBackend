@@ -2,10 +2,14 @@
 
 namespace App\Ai\Support;
 
+use App\Models\Major;
+use Illuminate\Support\Facades\Cache;
+
 /**
  * [CORE-LOGIC: JURUSAN-SCORING-ALGORITHM]
  * Engine pencocokan dan pembobotan minat siswa terhadap data jurusan SMKN 1 Subang.
- * Bersifat deterministik dan transparan, digunakan bersama oleh:
+ * Membaca data langsung dari database (model Major) dengan caching.
+ * Digunakan bersama oleh:
  *   1. RecommendJurusanTool (Chatbot AI NESAI)
  *   2. RecommendationService (Endpoint form /api/v1/recommendations/majors)
  */
@@ -28,7 +32,36 @@ class JurusanScorer
      */
     public function score(array $interests, int $limit = 3): array
     {
-        $jurusanList = config('jurusan', []);
+        // [CORE-LOGIC: DATABASE-FIRST-SCORER]
+        $jurusanList = Cache::remember('nesai:jurusan_scorer_db_v2', 3600, function () {
+            $majors = Major::with(['subjects', 'careers'])->get();
+
+            if ($majors->isEmpty()) {
+                return config('jurusan', []);
+            }
+
+            $configList = config('jurusan', []);
+
+            return $majors->map(function ($major) use ($configList) {
+                $configMatch = collect($configList)->first(function ($c) use ($major) {
+                    $slugMatch = isset($c['slug']) && strtolower($c['slug']) === strtolower($major->slug);
+                    $nameMatch = isset($c['nama']) && (
+                        str_contains(strtolower($major->name), strtolower($c['nama'])) ||
+                        str_contains(strtolower($c['nama']), strtolower($major->name))
+                    );
+                    return $slugMatch || $nameMatch;
+                });
+
+                return [
+                    'nama' => $major->name,
+                    'slug' => $major->slug,
+                    'deskripsi' => $major->summary ?: $major->description,
+                    'kata_kunci_minat' => $configMatch['kata_kunci_minat'] ?? [],
+                    'prospek_karir' => $major->careers->pluck('name')->toArray(),
+                    'mata_pelajaran_utama' => $major->subjects->pluck('name')->toArray(),
+                ];
+            })->toArray();
+        });
 
         if (empty($jurusanList) || empty($interests)) {
             return [];
@@ -48,6 +81,7 @@ class JurusanScorer
         foreach ($jurusanList as $jurusan) {
             $nama = $jurusan['nama'] ?? '';
             $slug = $jurusan['slug'] ?? '';
+            $deskripsi = strtolower($jurusan['deskripsi'] ?? '');
             $kataKunciMinat = array_map('strtolower', $jurusan['kata_kunci_minat'] ?? []);
             $prospekKarir = $jurusan['prospek_karir'] ?? [];
             $mapelUtama = $jurusan['mata_pelajaran_utama'] ?? [];
@@ -62,6 +96,7 @@ class JurusanScorer
             // 2. Kecocokan prospek karir cita-cita (+2 poin)
             // 3. Kecocokan nama jurusan langsung (+2 poin)
             // 4. Kecocokan mata pelajaran utama (+1 poin)
+            // 5. Kecocokan kata kunci dalam summary deskripsi (+1 poin)
             foreach ($normalizedInterests as $userInterest) {
                 // Cek kecocokan di kata kunci minat
                 foreach ($kataKunciMinat as $keyword) {
@@ -92,6 +127,12 @@ class JurusanScorer
                     if (str_contains($userInterest, $lowerMapel) || str_contains($lowerMapel, $userInterest)) {
                         $skor += 1;
                     }
+                }
+
+                // Cek ringkasan deskripsi
+                if (strlen($userInterest) >= 4 && str_contains($deskripsi, $userInterest)) {
+                    $skor += 1;
+                    $matchedKeywords[] = $userInterest;
                 }
             }
 
