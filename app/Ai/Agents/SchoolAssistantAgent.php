@@ -10,6 +10,7 @@ use App\Ai\Tools\NavigateToPageTool;
 use App\Ai\Tools\RecommendJurusanTool;
 use Laravel\Ai\Attributes\Provider;
 use Laravel\Ai\Contracts\Agent;
+use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
 use Laravel\Ai\Enums\Lab;
 use Laravel\Ai\Promptable;
@@ -17,9 +18,17 @@ use Laravel\Ai\Promptable;
 // [CORE-LOGIC: AGENT-PROVIDER-CONFIG]
 // Menggunakan Provider Lab::Gemini dari laravel/ai. JANGAN hardcode string provider agar kompatibel dengan sistem internal SDK.
 #[Provider(Lab::Gemini)]
-class SchoolAssistantAgent implements Agent, HasTools
+class SchoolAssistantAgent implements Agent, HasTools, Conversational
 {
     use Promptable;
+
+    /** @param iterable<\Laravel\Ai\Messages\Message> $conversationMessages */
+    public function __construct(private iterable $conversationMessages = []) {}
+
+    public function messages(): iterable
+    {
+        return $this->conversationMessages;
+    }
 
     /**
      * [CORE-LOGIC: AGENT-SYSTEM-PROMPT]

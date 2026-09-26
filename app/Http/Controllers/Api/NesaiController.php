@@ -12,13 +12,25 @@ class NesaiController
     {
         $response = $service->respond(
             $request->validated('message'),
-            $request->validated('context', [])
+            $request->validated('context', []),
+            $request->session()->getId(),
         );
 
         return response()->json([
             'data' => $response,
             'meta' => (object) [],
             'message' => null,
+        ]);
+    }
+
+    public function reset(\Illuminate\Http\Request $request, NesaiService $service): JsonResponse
+    {
+        $service->resetConversation($request->session()->getId());
+
+        return response()->json([
+            'data' => null,
+            'meta' => (object) [],
+            'message' => 'Percakapan berhasil direset.',
         ]);
     }
 }

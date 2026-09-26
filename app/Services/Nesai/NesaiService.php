@@ -3,7 +3,9 @@
 namespace App\Services\Nesai;
 
 use App\Ai\Agents\SchoolAssistantAgent;
+use App\Models\ChatSession;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Messages\Message;
 use Throwable;
 
 class NesaiService
@@ -27,17 +29,36 @@ class NesaiService
      *     mode: string
      * }
      */
-    public function respond(string $message, array $context = []): array
+    public function respond(string $message, array $context = [], ?string $sessionId = null): array
     {
-        $intent = $this->intent->detect($message);
-        $sources = $this->retrieval->retrieve($message);
+        if ($sessionId === null) {
+            throw new \InvalidArgumentException('A server-side Laravel session ID is required.');
+        }
+
+        $chatSession = ChatSession::firstOrCreate(['session_id' => $sessionId]);
+        $historyLimit = max(1, (int) config('chat.history_limit', 20));
+        $history = $chatSession->messages()
+            ->orderByDesc('id')
+            ->limit(max(0, $historyLimit - 1))
+            ->get()
+            ->reverse()
+            ->map(fn ($item) => new Message($item->role === 'model' ? 'assistant' : 'user', $item->content))
+            ->values()
+            ->all();
+        $userMessage = $chatSession->messages()->create(['role' => 'user', 'content' => $message]);
+        $intent = 'school_information';
+        $sources = [];
         $actions = [];
 
         try {
+            $intent = $this->intent->detect($message);
+            $sources = $this->retrieval->retrieve($message);
+
             // [CORE-LOGIC: AI-AGENT-INVOCATION]
             // Memanggil SchoolAssistantAgent (laravel/ai) secara non-streaming untuk tahap MVP.
             // Agent secara otomatis menentukan apakah perlu memanggil GetJurusanInfoTool atau NavigateToPageTool.
-            $response = SchoolAssistantAgent::make()->prompt($message);
+            $response = new SchoolAssistantAgent($history);
+            $response = $response->prompt($message);
             $answer = $response->text;
 
             // [CORE-LOGIC: TOOL-RESULT-EXTRACTION]
@@ -211,6 +232,8 @@ class NesaiService
             $sources = array_values(array_unique($sources));
             $actions = array_values(array_unique($actions, SORT_REGULAR));
 
+            $chatSession->messages()->create(['role' => 'model', 'content' => $answer]);
+
             return [
                 'answer' => $answer,
                 'intent' => $intent,
@@ -227,8 +250,11 @@ class NesaiService
                 'message' => $message,
             ]);
 
+            $fallbackAnswer = 'Halo! Saya NESAI, asisten virtual SMKN 1 Subang. Saat ini layanan AI sedang dalam penyesuaian. Anda dapat menanyakan seputar jurusan dan PPDB, atau langsung mengunjungi halaman yang tersedia di bawah ini.';
+            $userMessage->delete();
+
             return [
-                'answer' => 'Halo! Saya NESAI, asisten virtual SMKN 1 Subang. Saat ini layanan AI sedang dalam penyesuaian. Anda dapat menanyakan seputar jurusan dan PPDB, atau langsung mengunjungi halaman yang tersedia di bawah ini.',
+                'answer' => $fallbackAnswer,
                 'intent' => $intent,
                 'sources' => $sources,
                 'actions' => [
@@ -246,5 +272,10 @@ class NesaiService
                 'mode' => 'fallback-error',
             ];
         }
+    }
+
+    public function resetConversation(string $sessionId): void
+    {
+        ChatSession::where('session_id', $sessionId)->delete();
     }
 }

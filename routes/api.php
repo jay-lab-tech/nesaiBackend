@@ -7,10 +7,14 @@ use App\Http\Controllers\Api\NesaiController;
 use App\Http\Controllers\Api\Public;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\SearchController;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 
-// Direct endpoint for clients that use the short /api/chat path.
-Route::post('chat', NesaiController::class);
+// Chat routes need Laravel's session cookie middleware although they are under /api.
+Route::middleware('web')->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
+    Route::post('chat', NesaiController::class)->middleware('throttle:10,1');
+    Route::delete('chat', [NesaiController::class, 'reset']);
+});
 
 Route::prefix('v1')->group(function (): void {
 
@@ -47,7 +51,10 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/recommendations/majors', RecommendationController::class);
 
     // [CORE-LOGIC: CHATBOT-ENDPOINT-V1-ALIAS]
-    Route::post('/nesai/chat', NesaiController::class);
+    Route::middleware('web')->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
+        Route::post('/nesai/chat', NesaiController::class)->middleware('throttle:10,1');
+        Route::delete('/nesai/chat', [NesaiController::class, 'reset']);
+    });
 
     // ==========================================
     // 3. ADMIN CMS ENDPOINTS (Wajib auth:sanctum)
