@@ -4,7 +4,13 @@ namespace App\Services\Nesai;
 
 use App\Ai\Agents\SchoolAssistantAgent;
 use App\Models\ChatSession;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Log;
+use Laravel\Ai\Exceptions\InsufficientCreditsException;
+use Laravel\Ai\Exceptions\ProviderConnectionException;
+use Laravel\Ai\Exceptions\ProviderOverloadedException;
+use Laravel\Ai\Exceptions\RateLimitedException;
 use Laravel\Ai\Messages\Message;
 use Throwable;
 
@@ -19,8 +25,6 @@ class NesaiService
     /**
      * Handle incoming user message and generate a structured response.
      *
-     * @param  string  $message
-     * @param  array  $context
      * @return array{
      *     answer: string,
      *     intent: string,
@@ -31,6 +35,10 @@ class NesaiService
      */
     public function respond(string $message, array $context = [], ?string $sessionId = null): array
     {
+        $component = 'chat.persistence';
+        $providerStartedAt = null;
+        $componentStartedAt = hrtime(true);
+
         if ($sessionId === null) {
             throw new \InvalidArgumentException('A server-side Laravel session ID is required.');
         }
@@ -46,19 +54,45 @@ class NesaiService
             ->values()
             ->all();
         $userMessage = $chatSession->messages()->create(['role' => 'user', 'content' => $message]);
+        Log::debug('nesai.component', [
+            'component' => 'chat.persistence',
+            'duration_ms' => round((hrtime(true) - $componentStartedAt) / 1_000_000, 2),
+            'history_messages' => count($history),
+        ]);
         $intent = 'school_information';
         $sources = [];
         $actions = [];
 
         try {
+            $component = 'intent';
+            $componentStartedAt = hrtime(true);
             $intent = $this->intent->detect($message);
+            Log::debug('nesai.component', [
+                'component' => 'intent',
+                'duration_ms' => round((hrtime(true) - $componentStartedAt) / 1_000_000, 2),
+            ]);
+
+            $component = 'retrieval';
+            $componentStartedAt = hrtime(true);
             $sources = $this->retrieval->retrieve($message);
+            Log::debug('nesai.component', [
+                'component' => 'retrieval',
+                'duration_ms' => round((hrtime(true) - $componentStartedAt) / 1_000_000, 2),
+            ]);
 
             // [CORE-LOGIC: AI-AGENT-INVOCATION]
             // Memanggil SchoolAssistantAgent (laravel/ai) secara non-streaming untuk tahap MVP.
             // Agent secara otomatis menentukan apakah perlu memanggil GetJurusanInfoTool atau NavigateToPageTool.
+            $component = 'gemini';
+            $providerStartedAt = hrtime(true);
             $response = new SchoolAssistantAgent($history);
-            $response = $response->prompt($message);
+            $response = $response->prompt($message, timeout: (int) config('chat.provider_timeout', 30));
+            Log::info('nesai.provider', [
+                'provider' => 'gemini',
+                'model' => config('ai.providers.gemini.models.text.default'),
+                'status' => 'success',
+                'duration_ms' => round((hrtime(true) - $providerStartedAt) / 1_000_000, 2),
+            ]);
             $answer = $response->text;
 
             // [CORE-LOGIC: TOOL-RESULT-EXTRACTION]
@@ -89,8 +123,8 @@ class NesaiService
                                     if (! empty($rec['slug'])) {
                                         $actions[] = [
                                             'type' => 'navigate',
-                                            'path' => '/jurusan/' . $rec['slug'],
-                                            'title' => 'Lihat ' . ($rec['nama'] ?? 'Jurusan'),
+                                            'path' => '/jurusan/'.$rec['slug'],
+                                            'title' => 'Lihat '.($rec['nama'] ?? 'Jurusan'),
                                         ];
                                     }
                                 }
@@ -156,14 +190,14 @@ class NesaiService
                     if ($toolCall->name === 'navigate_to_page') {
                         $args = $toolCall->arguments;
                         $page = $args['page'] ?? '/';
-                        $path = str_starts_with($page, '/') ? $page : '/' . ltrim($page, '/');
+                        $path = str_starts_with($page, '/') ? $page : '/'.ltrim($page, '/');
                         if (! empty($args['slug'])) {
-                            $path = rtrim($path, '/') . '/' . ltrim($args['slug'], '/');
+                            $path = rtrim($path, '/').'/'.ltrim($args['slug'], '/');
                         }
                         $actions[] = [
                             'type' => 'navigate',
                             'path' => $path,
-                            'title' => $args['label'] ?? ('Halaman ' . ucfirst(trim($path, '/'))),
+                            'title' => $args['label'] ?? ('Halaman '.ucfirst(trim($path, '/'))),
                         ];
                     }
 
@@ -232,7 +266,19 @@ class NesaiService
             $sources = array_values(array_unique($sources));
             $actions = array_values(array_unique($actions, SORT_REGULAR));
 
+            $component = 'chat.persistence';
+            $componentStartedAt = hrtime(true);
             $chatSession->messages()->create(['role' => 'model', 'content' => $answer]);
+            $storedLimit = (int) config('chat.stored_messages_limit', 100);
+            $prunedMessages = $chatSession->messages()
+                ->whereNotIn('id', $chatSession->messages()->select('id')->orderByDesc('id')->limit($storedLimit))
+                ->delete();
+            Log::debug('nesai.component', [
+                'component' => 'chat.persistence',
+                'operation' => 'store_assistant_message',
+                'duration_ms' => round((hrtime(true) - $componentStartedAt) / 1_000_000, 2),
+                'pruned_messages' => $prunedMessages,
+            ]);
 
             return [
                 'answer' => $answer,
@@ -245,9 +291,30 @@ class NesaiService
             // [CORE-LOGIC: RESILIENT-FALLBACK-GUARD]
             // Mencegah HTTP 500 error ke pengguna saat presentasi juri jika kuota Gemini habis (rate limit 429) atau koneksi timeout.
             // Mengembalikan respons ramah beserta opsi tombol navigasi darurat ke halaman penting sekolah.
-            Log::error('NESAI Agent error: ' . $e->getMessage(), [
-                'exception' => $e,
-                'message' => $message,
+            $providerStatus = $e instanceof RateLimitedException ? 429 : null;
+            for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof RequestException && $cause->response !== null) {
+                    $providerStatus = $cause->response->status();
+                    break;
+                }
+            }
+
+            Log::error('nesai.component_failed', [
+                'component' => $component,
+                'exception' => $e::class,
+                'provider' => $component === 'gemini' ? 'gemini' : null,
+                'provider_status' => $providerStatus,
+                'error_kind' => match (true) {
+                    $e instanceof RateLimitedException => 'rate_limited',
+                    $e instanceof ConnectionException, $e instanceof ProviderConnectionException => 'connection_or_timeout',
+                    $e instanceof ProviderOverloadedException => 'provider_overloaded',
+                    $e instanceof InsufficientCreditsException => 'quota_or_credit_exhausted',
+                    $providerStatus !== null => 'provider_http_error',
+                    default => $component === 'gemini' ? 'provider_error' : $component.'_error',
+                },
+                'duration_ms' => $component === 'gemini' && $providerStartedAt !== null
+                    ? round((hrtime(true) - $providerStartedAt) / 1_000_000, 2)
+                    : null,
             ]);
 
             $fallbackAnswer = 'Halo! Saya NESAI, asisten virtual SMKN 1 Subang. Saat ini layanan AI sedang dalam penyesuaian. Anda dapat menanyakan seputar jurusan dan PPDB, atau langsung mengunjungi halaman yang tersedia di bawah ini.';

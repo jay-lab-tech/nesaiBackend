@@ -4,9 +4,21 @@ namespace App\Traits;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 trait ApiResponse
 {
+    protected function boundedPerPage(Request $request, int $default = 15, int $maximum = 100): int
+    {
+        $value = $request->query('per_page', $default);
+
+        if (! is_scalar($value) || filter_var((string) $value, FILTER_VALIDATE_INT) === false) {
+            return $default;
+        }
+
+        return min(max((int) $value, 1), $maximum);
+    }
+
     /**
      * Return standard success single / operation response.
      */

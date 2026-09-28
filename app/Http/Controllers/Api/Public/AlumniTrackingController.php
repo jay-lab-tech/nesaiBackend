@@ -6,15 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\AlumniTrackingStat;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class AlumniTrackingController extends Controller
 {
     use ApiResponse;
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $stats = AlumniTrackingStat::orderBy('year', 'desc')->get();
+        $stats = AlumniTrackingStat::orderByDesc('year')->orderBy('id')->paginate($this->boundedPerPage($request));
 
-        return $this->successResponse($stats, 'Statistik penelusuran alumni berhasil diambil.');
+        return $this->paginatedResponse($stats, 'Statistik penelusuran alumni berhasil diambil.');
     }
 }

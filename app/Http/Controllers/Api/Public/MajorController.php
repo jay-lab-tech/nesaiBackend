@@ -43,9 +43,9 @@ class MajorController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
-        $majors = $query->get();
+        $majors = $query->orderBy('id')->paginate($this->boundedPerPage($request));
 
-        return $this->successResponse($majors, 'Daftar jurusan berhasil diambil.');
+        return $this->paginatedResponse($majors, 'Daftar jurusan berhasil diambil.');
     }
 
     public function show(string $slug): JsonResponse
@@ -57,14 +57,14 @@ class MajorController extends Controller
             ->where('slug', $targetSlug)
             ->first();
 
-        if (!$major) {
+        if (! $major) {
             // Fallback cari berdasarkan pencocokan substring nama atau slug
             $major = Major::with(['subjects', 'careers', 'innovations', 'admissionStats', 'alumni'])
                 ->where('slug', 'like', "%{$lowerSlug}%")
                 ->first();
         }
 
-        if (!$major) {
+        if (! $major) {
             return $this->errorResponse('Jurusan tidak ditemukan.', 404);
         }
 

@@ -24,9 +24,9 @@ class ContentController extends Controller
             $query->where('module', $request->query('module'));
         }
 
-        $contents = $query->get();
+        $contents = $query->orderBy('id')->paginate($this->boundedPerPage($request));
 
-        return $this->successResponse($contents, 'Daftar konten berhasil diambil.');
+        return $this->paginatedResponse($contents, 'Daftar konten berhasil diambil.');
     }
 
     public function show(string $slug): JsonResponse
@@ -35,7 +35,7 @@ class ContentController extends Controller
             ->where('is_published', true)
             ->first();
 
-        if (!$content) {
+        if (! $content) {
             return $this->errorResponse('Konten tidak ditemukan.', 404);
         }
 

@@ -20,8 +20,8 @@ class ExtracurricularController extends Controller
             $query->where('category', $request->query('category'));
         }
 
-        $extracurriculars = $query->get();
+        $extracurriculars = $query->orderBy('id')->paginate($this->boundedPerPage($request));
 
-        return $this->successResponse($extracurriculars, 'Daftar ekstrakurikuler berhasil diambil.');
+        return $this->paginatedResponse($extracurriculars, 'Daftar ekstrakurikuler berhasil diambil.');
     }
 }

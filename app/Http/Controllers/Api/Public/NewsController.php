@@ -14,7 +14,7 @@ class NewsController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $perPage = (int) $request->query('per_page', 15);
+        $perPage = $this->boundedPerPage($request);
 
         $query = News::query()
             ->whereNotNull('published_at')
@@ -25,7 +25,7 @@ class NewsController extends Controller
             $search = $request->query('search');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('excerpt', 'like', "%{$search}%");
+                    ->orWhere('excerpt', 'like', "%{$search}%");
             });
         }
 
@@ -41,7 +41,7 @@ class NewsController extends Controller
             ->where('published_at', '<=', now())
             ->first();
 
-        if (!$news) {
+        if (! $news) {
             return $this->errorResponse('Berita tidak ditemukan.', 404);
         }
 

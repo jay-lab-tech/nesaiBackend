@@ -8,21 +8,25 @@ use App\Ai\Tools\GetPpdbInfoTool;
 use App\Ai\Tools\GetSchoolInfoTool;
 use App\Ai\Tools\NavigateToPageTool;
 use App\Ai\Tools\RecommendJurusanTool;
+use Laravel\Ai\Attributes\MaxSteps;
 use Laravel\Ai\Attributes\Provider;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
 use Laravel\Ai\Contracts\HasTools;
+use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Enums\Lab;
+use Laravel\Ai\Messages\Message;
 use Laravel\Ai\Promptable;
 
 // [CORE-LOGIC: AGENT-PROVIDER-CONFIG]
 // Menggunakan Provider Lab::Gemini dari laravel/ai. JANGAN hardcode string provider agar kompatibel dengan sistem internal SDK.
 #[Provider(Lab::Gemini)]
-class SchoolAssistantAgent implements Agent, HasTools, Conversational
+#[MaxSteps(3)]
+class SchoolAssistantAgent implements Agent, Conversational, HasTools
 {
     use Promptable;
 
-    /** @param iterable<\Laravel\Ai\Messages\Message> $conversationMessages */
+    /** @param iterable<Message> $conversationMessages */
     public function __construct(private iterable $conversationMessages = []) {}
 
     public function messages(): iterable
@@ -112,7 +116,7 @@ PROMPT;
      * 5. GetNewsInfoTool: Penarikan berita dan prestasi resmi dari database tabel news
      * 6. NavigateToPageTool: Penentuan rute frontend untuk navigasi dinamis
      *
-     * @return list<\Laravel\Ai\Contracts\Tool>
+     * @return list<Tool>
      */
     public function tools(): iterable
     {

@@ -2,12 +2,18 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\SchoolPublicDataSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class MajorRecommendationTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_recommendation_endpoint_returns_scored_majors(): void
     {
+        $this->seed(SchoolPublicDataSeeder::class);
+
         $response = $this->postJson('/api/v1/recommendations/majors', [
             'interests' => ['coding', 'game', 'software'],
         ]);
@@ -35,7 +41,7 @@ class MajorRecommendationTest extends TestCase
 
         $data = $response->json('data');
         $this->assertNotEmpty($data);
-        $this->assertSame('pplg', $data[0]['slug']);
+        $this->assertSame('pengembangan-perangkat-lunak-dan-gim', $data[0]['slug']);
     }
 
     public function test_recommendation_endpoint_validates_required_interests(): void

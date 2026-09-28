@@ -20,8 +20,8 @@ class FacilityController extends Controller
             $query->where('category', $request->query('category'));
         }
 
-        $facilities = $query->get();
+        $facilities = $query->orderBy('id')->paginate($this->boundedPerPage($request));
 
-        return $this->successResponse($facilities, 'Daftar sarana prasarana berhasil diambil.');
+        return $this->paginatedResponse($facilities, 'Daftar sarana prasarana berhasil diambil.');
     }
 }
