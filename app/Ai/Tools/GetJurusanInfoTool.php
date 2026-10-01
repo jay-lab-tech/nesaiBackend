@@ -2,9 +2,9 @@
 
 namespace App\Ai\Tools;
 
+use App\Ai\Support\NesaiCache;
 use App\Models\Major;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Facades\Cache;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -71,7 +71,7 @@ class GetJurusanInfoTool implements Tool
         // [CORE-LOGIC: DATABASE-FIRST-SOURCE]
         // Mengambil seluruh data jurusan resmi langsung dari database (Major model) dengan relasi lengkap
         // Menggunakan Cache layer untuk menjamin performa cepat (<10ms).
-        $jurusanList = Cache::remember('nesai:jurusan_list_db_v2', 3600, function () {
+        $jurusanList = NesaiCache::remember(NesaiCache::KEY_JURUSAN_LIST, function () {
             $majors = Major::with(['subjects', 'careers', 'innovations'])->get();
 
             if ($majors->isEmpty()) {
@@ -111,8 +111,18 @@ class GetJurusanInfoTool implements Tool
         $query = $request->string('nama')->trim()->toString();
 
         if ($query === '') {
+            // [CORE-LOGIC: TOKEN-ECONOMY-SUMMARY]
+            // Tanpa kata kunci, kirim daftar ringkas (nama + slug) alih-alih dump seluruh
+            // rincian jurusan. Agent dapat memanggil tool ini lagi dengan nama spesifik
+            // untuk mengambil detail lengkap. Menghemat ratusan token per request.
+            $summary = array_map(fn ($item) => [
+                'nama' => $item['nama'] ?? '',
+                'slug' => $item['slug'] ?? '',
+            ], $jurusanList);
+
             return "Daftar seluruh kompetensi keahlian resmi di SMKN 1 Subang (" . count($jurusanList) . " jurusan - Sumber: Basis Data Resmi):\n\n"
-                . json_encode($jurusanList, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                . json_encode($summary, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                . "\n\nUntuk detail lengkap (mata pelajaran, prospek karir, karya inovasi), panggil tool ini lagi dengan nama jurusan tertentu.";
         }
 
         $lowerQuery = strtolower($query);

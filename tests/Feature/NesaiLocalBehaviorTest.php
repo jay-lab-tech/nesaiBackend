@@ -3,10 +3,12 @@
 namespace Tests\Feature;
 
 use App\Ai\Agents\SchoolAssistantAgent;
+use App\Jobs\PruneChatMessages;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Services\Nesai\NesaiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Route;
 use RuntimeException;
 use Tests\TestCase;
@@ -57,7 +59,41 @@ class NesaiLocalBehaviorTest extends TestCase
         $this->assertSame('model', $session->messages()->orderByDesc('id')->first()->role);
     }
 
-    public function test_chat_routes_keep_the_known_ten_per_minute_limit(): void
+    public function test_pruning_is_dispatched_as_a_deferred_job(): void
+    {
+        Queue::fake();
+        SchoolAssistantAgent::fake(fn () => 'Jawaban singkat.');
+
+        app(NesaiService::class)->respond('Halo', [], 'queued-prune-session');
+
+        Queue::assertPushedOn(config('chat.prune_queue', 'default'), PruneChatMessages::class);
+    }
+
+    public function test_identical_message_within_window_is_deduplicated(): void
+    {
+        config(['chat.idempotency_seconds' => 30]);
+        SchoolAssistantAgent::fake(['Jawaban idempotent.']);
+        $service = app(NesaiService::class);
+
+        $first = $service->respond('Pertanyaan sama', [], 'idem-session');
+        $second = $service->respond('Pertanyaan sama', [], 'idem-session');
+
+        // Respons kedua diambil dari cache idempotency → provider hanya dipanggil sekali.
+        $this->assertSame($first, $second);
+        $this->assertSame(2, ChatSession::query()->where('session_id', 'idem-session')->firstOrFail()->messages()->count());
+    }
+
+    public function test_blank_message_rejected_by_validation(): void
+    {
+        $response = $this->postJson('/api/chat', [
+            'message' => '',
+        ], ['Origin' => 'http://localhost:3000']);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('message');
+    }
+
+    public function test_chat_routes_use_the_ip_bound_named_throttle(): void
     {
         foreach (['api/chat', 'api/v1/nesai/chat'] as $uri) {
             $route = collect(Route::getRoutes())->first(
@@ -65,7 +101,65 @@ class NesaiLocalBehaviorTest extends TestCase
             );
 
             $this->assertNotNull($route);
-            $this->assertContains('throttle:10,1', $route->gatherMiddleware());
+            // Rate limit mengikat pada IP (limiter "chat") + plafon global, bukan lagi
+            // throttle:10,1 yang dapat di-reset dengan memutar cookie sesi baru.
+            $this->assertContains('throttle:chat', $route->gatherMiddleware());
         }
+    }
+
+    public function test_search_and_recommendation_endpoints_are_throttled(): void
+    {
+        $search = collect(Route::getRoutes())->first(
+            fn ($route) => $route->uri() === 'api/v1/search' && in_array('GET', $route->methods(), true)
+        );
+        $recommend = collect(Route::getRoutes())->first(
+            fn ($route) => $route->uri() === 'api/v1/recommendations/majors' && in_array('POST', $route->methods(), true)
+        );
+
+        $this->assertNotNull($search);
+        $this->assertNotNull($recommend);
+        $this->assertContains('throttle:search', $search->gatherMiddleware());
+        $this->assertContains('throttle:recommendations', $recommend->gatherMiddleware());
+    }
+
+    public function test_context_rejects_more_than_five_items(): void
+    {
+        $response = $this->postJson('/api/chat', [
+            'message' => 'Halo',
+            'context' => ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        ], ['Origin' => 'http://localhost:3000']);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('context');
+    }
+
+    public function test_context_rejects_non_string_items(): void
+    {
+        $response = $this->postJson('/api/chat', [
+            'message' => 'Halo',
+            'context' => [['nested' => 'array']],
+        ], ['Origin' => 'http://localhost:3000']);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors('context.0');
+    }
+
+    public function test_chat_rejects_request_from_untrusted_origin_with_session(): void
+    {
+        config(['session.driver' => 'array']);
+
+        $response = $this->withUnencryptedCookie('laravel_session', 'attacker-session')
+            ->postJson('/api/chat', ['message' => 'Halo'], ['Origin' => 'https://evil.example.com']);
+
+        $response->assertStatus(403);
+    }
+
+    public function test_chat_rejects_request_with_session_cookie_but_no_origin(): void
+    {
+        // Fail-closed: request yang membawa cookie sesi namun tanpa Origin/Referer
+        // yang dapat diverifikasi harus ditolak (mencegah CSRF-like dari pihak ketiga).
+        $response = $this->call('POST', '/api/chat', [], ['laravel_session' => 'attacker-or-ambient-session']);
+
+        $response->assertStatus(403);
     }
 }

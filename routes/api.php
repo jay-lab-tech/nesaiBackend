@@ -7,13 +7,16 @@ use App\Http\Controllers\Api\NesaiController;
 use App\Http\Controllers\Api\Public;
 use App\Http\Controllers\Api\RecommendationController;
 use App\Http\Controllers\Api\SearchController;
+use App\Http\Middleware\EnsureTrustedChatOrigin;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 
 // Chat routes need Laravel's session cookie middleware although they are under /api.
-Route::middleware('web')->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
-    Route::post('chat', NesaiController::class)->middleware('throttle:10,1');
-    Route::delete('chat', [NesaiController::class, 'reset']);
+// EnsureTrustedChatOrigin menggantikan proteksi CSRF yang dinonaktifkan pada endpoint publik ini.
+// Rate limit memakai limiter bernama "chat" yang mengikat pada IP (bukan session) + plafon global.
+Route::middleware(['web', EnsureTrustedChatOrigin::class])->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
+    Route::post('chat', NesaiController::class)->middleware('throttle:chat');
+    Route::delete('chat', [NesaiController::class, 'reset'])->middleware('throttle:chat');
 });
 
 Route::prefix('v1')->group(function (): void {
@@ -47,13 +50,13 @@ Route::prefix('v1')->group(function (): void {
 
     // Utility & AI Services
     Route::get('/health', HealthController::class);
-    Route::get('/search', SearchController::class);
-    Route::post('/recommendations/majors', RecommendationController::class);
+    Route::get('/search', SearchController::class)->middleware('throttle:search');
+    Route::post('/recommendations/majors', RecommendationController::class)->middleware('throttle:recommendations');
 
     // [CORE-LOGIC: CHATBOT-ENDPOINT-V1-ALIAS]
-    Route::middleware('web')->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
-        Route::post('/nesai/chat', NesaiController::class)->middleware('throttle:10,1');
-        Route::delete('/nesai/chat', [NesaiController::class, 'reset']);
+    Route::middleware(['web', EnsureTrustedChatOrigin::class])->withoutMiddleware(PreventRequestForgery::class)->group(function (): void {
+        Route::post('/nesai/chat', NesaiController::class)->middleware('throttle:chat');
+        Route::delete('/nesai/chat', [NesaiController::class, 'reset'])->middleware('throttle:chat');
     });
 
     // ==========================================

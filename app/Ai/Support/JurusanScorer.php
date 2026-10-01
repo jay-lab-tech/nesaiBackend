@@ -3,7 +3,6 @@
 namespace App\Ai\Support;
 
 use App\Models\Major;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * [CORE-LOGIC: JURUSAN-SCORING-ALGORITHM]
@@ -33,7 +32,7 @@ class JurusanScorer
     public function score(array $interests, int $limit = 3): array
     {
         // [CORE-LOGIC: DATABASE-FIRST-SCORER]
-        $jurusanList = Cache::remember('nesai:jurusan_scorer_db_v2', 3600, function () {
+        $jurusanList = NesaiCache::remember(NesaiCache::KEY_JURUSAN_SCORER, function () {
             $majors = Major::with(['subjects', 'careers'])->get();
 
             if ($majors->isEmpty()) {
@@ -92,45 +91,47 @@ class JurusanScorer
 
             // [CORE-LOGIC: KEYWORD-MATCHING-RULE]
             // Aturan pembobotan:
-            // 1. Kecocokan kata kunci minat (+3 poin jika substring / identik)
+            // 1. Kecocokan kata kunci minat (+3 poin, word-boundary / identik)
             // 2. Kecocokan prospek karir cita-cita (+2 poin)
             // 3. Kecocokan nama jurusan langsung (+2 poin)
             // 4. Kecocokan mata pelajaran utama (+1 poin)
             // 5. Kecocokan kata kunci dalam summary deskripsi (+1 poin)
             foreach ($normalizedInterests as $userInterest) {
-                // Cek kecocokan di kata kunci minat
+                // Minat terlalu pendek (< 3 karakter) rawan false positive (mis. "ak", "ap",
+                // "to" cocok ke banyak kata). Lewati untuk pencocokan substring.
+                $isMatchable = mb_strlen($userInterest) >= 3;
+
+                // Cek kecocokan di kata kunci minat (word-boundary agar tidak cocok sebagian).
                 foreach ($kataKunciMinat as $keyword) {
-                    if (str_contains($userInterest, $keyword) || str_contains($keyword, $userInterest)) {
+                    if ($isMatchable && $this->matches($userInterest, $keyword)) {
                         $skor += 3;
                         $matchedKeywords[] = $keyword;
                     }
                 }
 
-                // Cek kecocokan di prospek karir
+                // Cek kecocokan di prospek karir.
                 foreach ($prospekKarir as $career) {
-                    $lowerCareer = strtolower($career);
-                    if (str_contains($userInterest, $lowerCareer) || str_contains($lowerCareer, $userInterest)) {
+                    if ($isMatchable && $this->matches($userInterest, strtolower($career))) {
                         $skor += 2;
                         $matchedCareers[] = $career;
                     }
                 }
 
-                // Cek nama jurusan
-                if (str_contains(strtolower($nama), $userInterest) || str_contains($userInterest, strtolower($nama))) {
+                // Cek nama jurusan.
+                if ($isMatchable && $this->matches($userInterest, strtolower($nama))) {
                     $skor += 2;
                     $matchedKeywords[] = $nama;
                 }
 
-                // Cek mata pelajaran utama
+                // Cek mata pelajaran utama.
                 foreach ($mapelUtama as $mapel) {
-                    $lowerMapel = strtolower($mapel);
-                    if (str_contains($userInterest, $lowerMapel) || str_contains($lowerMapel, $userInterest)) {
+                    if ($isMatchable && $this->matches($userInterest, strtolower($mapel))) {
                         $skor += 1;
                     }
                 }
 
-                // Cek ringkasan deskripsi
-                if (strlen($userInterest) >= 4 && str_contains($deskripsi, $userInterest)) {
+                // Cek ringkasan deskripsi.
+                if ($isMatchable && str_contains($deskripsi, $userInterest)) {
                     $skor += 1;
                     $matchedKeywords[] = $userInterest;
                 }
@@ -172,5 +173,36 @@ class JurusanScorer
 
         // Ambil top-N sesuai limit
         return array_slice($scoredJurusan, 0, $limit);
+    }
+
+    /**
+     * [CORE-LOGIC: SAFE-KEYWORD-MATCH]
+     * Kecocokan kata kunci yang aman dari false positive:
+     * - `$needle` adalah minat pengguna, `$haystack` adalah teks data jurusan.
+     * - Bila salah satu berupa frasa (mengandung spasi), cukup cek substring.
+     * - Bila keduanya satu kata, gunakan batas kata (word boundary) sehingga
+     *   minat "ak" atau "to" tidak cocok ke "akuntansi"/"otomotif" secara keliru.
+     */
+    private function matches(string $needle, string $haystack): bool
+    {
+        $needle = trim($needle);
+        $haystack = trim($haystack);
+
+        if ($needle === '' || $haystack === '') {
+            return false;
+        }
+
+        // Kecocokan identik / frasa utuh.
+        if ($needle === $haystack) {
+            return true;
+        }
+
+        // Frasa (mengandung spasi) → cek substring langsung.
+        if (str_contains($needle, ' ') || str_contains($haystack, ' ')) {
+            return str_contains($haystack, $needle) || str_contains($needle, $haystack);
+        }
+
+        // Kata tunggal → cocokkan sebagai kata utuh (word boundary) di dalam haystack.
+        return (bool) preg_match('/(?<![\p{L}\p{N}])'.preg_quote($needle, '/').'(?![\p{L}\p{N}])/iu', $haystack);
     }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Ai\Tools;
 
+use App\Ai\Support\NesaiCache;
 use App\Models\Extracurricular;
 use App\Models\Facility;
 use App\Models\Innovation;
 use App\Models\News;
 use App\Models\School;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Facades\Cache;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -85,7 +85,7 @@ class GetSchoolInfoTool implements Tool
         // [CORE-LOGIC: DATABASE-FIRST-SOURCE]
         // Mengambil data profil sekolah resmi dari database (School model) dengan caching layer
         // untuk response time ultra cepat (<10ms) dan deterministik.
-        $schoolData = Cache::remember('nesai:school_profile_v4', 3600, function () {
+        $schoolData = NesaiCache::remember(NesaiCache::KEY_SCHOOL_PROFILE, function () {
             $school = School::first();
 
             $facilityCount = Facility::count();
@@ -175,10 +175,9 @@ class GetSchoolInfoTool implements Tool
 
         $section = strtolower(trim($request->string('section')->toString()));
 
-        // Jika tidak ada section spesifik, kembalikan seluruh profil sekolah
+        // Jika tidak ada section spesifik, kembalikan ringkasan padat (bukan dump penuh).
         if ($section === '') {
-            return "Profil resmi SMKN 1 Subang (Sumber: Basis Data Resmi):\n\n"
-                . json_encode($schoolData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            return $this->summarize($schoolData);
         }
 
         // Cari section yang diminta melalui alias dictionary
@@ -210,6 +209,61 @@ class GetSchoolInfoTool implements Tool
 
         return "Informasi \"{$section}\" SMKN 1 Subang:\n\n"
             . json_encode($filtered, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * [CORE-LOGIC: TOKEN-ECONOMY-SUMMARY]
+     * Merangkum profil sekolah: memuat identitas inti + statistik + NAMA item untuk
+     * fasilitas/ekskul/inovasi (tanpa deskripsi panjang), sehingga agent tetap punya
+     * konteks faktual tanpa meniup prompt dengan ribuan token. Agent dapat memanggil
+     * ulang dengan `section` spesifik untuk detail lengkap.
+     *
+     * @param  array<string, mixed>  $schoolData
+     */
+    private function summarize(array $schoolData): string
+    {
+        $summary = [
+            'nama_resmi' => $schoolData['nama_resmi'] ?? null,
+            'npsn' => $schoolData['npsn'] ?? null,
+            'akreditasi' => $schoolData['akreditasi'] ?? null,
+            'tahun_berdiri' => $schoolData['tahun_berdiri'] ?? null,
+            'kepala_sekolah' => $schoolData['kepala_sekolah'] ?? null,
+            'jumlah_siswa' => $schoolData['jumlah_siswa'] ?? null,
+            'jumlah_guru_staf' => $schoolData['jumlah_guru_staf'] ?? null,
+            'jumlah_ruang_kelas' => $schoolData['jumlah_ruang_kelas'] ?? null,
+            'alamat' => $schoolData['alamat'] ?? null,
+            'kontak' => $schoolData['kontak'] ?? null,
+            'program_unggulan' => $schoolData['program_unggulan'] ?? null,
+            'jumlah_jurusan' => $schoolData['jumlah_jurusan'] ?? null,
+            'fasilitas' => $this->namesOf($schoolData['ringkasan_fasilitas'] ?? []),
+            'ekstrakurikuler' => $schoolData['ekstrakurikuler'] ?? [],
+            'karya_inovasi' => $this->namesOf($schoolData['karya_inovasi'] ?? []),
+            'berita_terbaru' => $this->namesOf($schoolData['berita_prestasi'] ?? [], 'judul'),
+        ];
+
+        return "Ringkasan profil SMKN 1 Subang (Sumber: Basis Data Resmi). "
+            . "Untuk detail lengkap bagian tertentu (visi_misi, sejarah, fasilitas, inovasi, dll), panggil tool ini lagi dengan `section` spesifik:\n\n"
+            . json_encode(array_filter($summary, fn ($v) => $v !== null && $v !== []), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Mengambil daftar nama dari array item asosiatif.
+     *
+     * @param  array<int, mixed>  $items
+     * @return list<string>
+     */
+    private function namesOf(array $items, string $key = 'nama'): array
+    {
+        $names = [];
+        foreach ($items as $item) {
+            if (is_array($item) && isset($item[$key]) && is_string($item[$key])) {
+                $names[] = $item[$key];
+            } elseif (is_string($item)) {
+                $names[] = $item;
+            }
+        }
+
+        return $names;
     }
 
     /**

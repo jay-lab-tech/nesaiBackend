@@ -2,9 +2,9 @@
 
 namespace App\Ai\Tools;
 
+use App\Ai\Support\NesaiCache;
 use App\Models\Ppdb;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
-use Illuminate\Support\Facades\Cache;
 use Laravel\Ai\Contracts\Tool;
 use Laravel\Ai\Tools\Request;
 use Stringable;
@@ -71,7 +71,7 @@ class GetPpdbInfoTool implements Tool
     {
         // [CORE-LOGIC: DATABASE-FIRST-SOURCE]
         // Mengambil data PPDB dari database jika tersedia, dengan fallback ke konfigurasi resmi sekolah
-        $ppdbData = Cache::remember('nesai:ppdb_data_v2', 3600, function () {
+        $ppdbData = NesaiCache::remember(NesaiCache::KEY_PPDB, function () {
             $ppdb = Ppdb::where('is_active', true)->latest()->first() ?? Ppdb::latest()->first();
             $fallbackConfig = config('ppdb', []);
 
